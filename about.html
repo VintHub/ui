@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - Vulnerability Intelligence Hub</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="custom-scrollbar" data-page="about">
+
+<main class="flex-grow">
+    <div class="container">
+
+        <section id="description">
+            <h2 class="section-title">Everything you always wanted to know about CVEs* </h2><span class="subtitle"> *but were afraid to ask</span><br><br>
+            <p class="faq-answer">
+                Vinthub, the <strong>Vulnerability Intelligence Hub</strong> is a lightweight, client-side analytical tool designed to provide comprehensive vulnerability intelligence without the need for costly subscriptions or proprietary databases. By leveraging a decentralized architecture, the tool orchestrates real-time data retrieval from a suite of public and official cybersecurity repositories, including the National Vulnerability Database (NVD), CISA's Known Exploited Vulnerabilities (KEV) catalog, FIRST EPSS, the CVE Program, Red Hat VEX and GitHub GHSA.
+            </p>
+            <p class="faq-answer">
+                Tailored for both offensive and defensive security practitioners, the tool centralizes prioritization metrics while providing immediate access to public exploits and proof-of-concept (PoC) code.
+            </p><br>
+
+            <p class="faq-answer">Key Features:</p>
+            <ul class="faq-ul">
+                <li class="faq-li"><strong>Free:</strong> No registration needed and no usage limits.</li>
+                <li class="faq-li"><strong>Open source:</strong> The tool's codebase is fully public and transparent.</li>
+                <li class="faq-li"><strong>Official data orchestration:</strong> Aggregates critical metrics such as CVSS scores, CWE/CAPEC mappings, EPSS (Exploit Prediction Scoring System) values, and CISA KEV (including ransomware) directly from authoritative sources.</li>
+                <li class="faq-li"><strong>Decision support integration:</strong> Adopts the Stakeholder-Specific Vulnerability Categorization (SSVC) framework, automatically calculating actionable remediation priorities (e.g., Track, Attend, Act).</li>
+                <li class="faq-li"><strong>Public exploit intelligence:</strong> Crawls best of breed public repositories, including GitHub PoC archives, Exploit-DB, Metasploit and Nuclei, to correlate vulnerabilities with existing proof-of-concept code.</li>
+            </ul>
+        </section>
+        <br><br>
+
+        <section id="faq">
+            <h2 class="section-title">Frequently Asked Questions</h2><br>
+
+            <div class="faq-item">
+                <span class="faq-question">Are you tracking me?</span>
+                <p class="faq-answer">
+                    No, aside from basic analytics provided by Cloudflare Pages. I don't know who you are or which vulnerabilities you are looking for, and I don't care to know. 
+                    <br><br>
+                    <em>Note on Cloudflare Pages:</em> This site uses standard Cloudflare Web Analytics, which is a privacy-first, non-invasive analytics service. It does not use cookies, does not collect personal data, and does not track users across different websites. It only provides high-level metrics like page views and browser types to help me understand site performance.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">SSVC is a decision tree, why are you reaching a decision without asking me for any information?</span>
+                <p class="faq-answer">
+                    The SSVC decision is automatically calculated in <strong>"paranoid mode."</strong> For the purpose of providing immediate, actionable intelligence, the tool assumes the "Mission & Wellbeing Impact" is always <strong>High</strong>. This ensures that the suggested priority (Track, Attend, Act) leans toward safety and urgency.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">SSVC is shown even when official sources don't provide it. Where is that data coming from?</span>
+                <p class="faq-answer">
+                    When an official SSVC is not available, it is calculated dynamically based on the data from other sources:
+                </p>
+                
+                <div class="logic-box">
+                    <span class="logic-title">Exploitation Field</span>
+                    <p class="faq-answer">
+                        • If the CVE is in the CISA KEV catalog, it is set to <code>Active (A)</code>.<br>
+                        • Else if there is at least one PoC URL, it is set to <code>PoC (P)</code>.<br>
+                        • Otherwise, it defaults to <code>None (N)</code>.
+                    </p>
+                </div>
+
+                <div class="logic-box">
+                    <span class="logic-title">Automatable Field</span>
+                    <p class="faq-answer">
+                        The CVE is marked as <code>Yes (Y)</code> if the CVSS metrics match:<br>
+                        <code>Attack Vector: NETWORK</code> + <code>Privileges Required: NONE</code> + <code>User Interaction: NONE</code> + <code>Attack Complexity: LOW</code>.<br>
+                        All other conditions result in <code>No (N)</code>.
+                    </p>
+                </div>
+
+                <div class="logic-box">
+                    <span class="logic-title">Technical Impact Field</span>
+                    <p class="faq-answer">
+                        Marked as <code>Total (T)</code> if <code>Confidentiality Impact: HIGH</code> AND <code>Integrity Impact: HIGH</code>.<br>
+                        Otherwise, it is marked as <code>Partial (P)</code>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">Your SSVC Exploitation field sometimes differs from the one provided by CISA. Why?</span>
+                <p class="faq-answer">
+                    Whenever we get to know that a PoC is available and SSVC provided by CISA reports <i>Exploitation</i> as <i>None</i>, we update it to <i>PoC</i> to better reflect reality. For the same reason, whenever we get to know that a CVE is listed in KEV and SSVC provided by CISA has <i>Exploitation</i> set to <i>None</i> or <i>Poc</i> we update it to <i>Active</i>.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">SSVC doesn't officially have a vector; did you make that up?</span>
+                <p class="faq-answer">
+                    Yes and no. It doesn't have an official vector string format (which is a pity), so I created one for this tool. However, it is built using official short keys derived from the <a href="https://github.com/CERTCC/SSVC/blob/main/docs/ssvc-calc/CISA-Coordinator.json" target="_blank" style="color:var(--accent)">CISA Coordinator</a>.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">I don't trust you, I want to run it on my own infrastructure.</span>
+                <p class="faq-answer">
+                    That's understandable. The platform is open source. You can clone the UI from <a href="https://github.com/lucacapacci/Vulnerability-Intelligence-Hub/" target="_blank" style="color:var(--accent)">GitHub</a> and host it yourself. You can also clone data sources from these repos: 
+                    <ul class="faq-ul">
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/cisa_kev" target="_blank" style="color:var(--accent)">CISA KEV</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/epss" target="_blank" style="color:var(--accent)">FIRST EPSS</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/nvd" target="_blank" style="color:var(--accent)">NIST NVD</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/PoC-in-GitHub" target="_blank" style="color:var(--accent)">PoC in GitHub</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/pocs" target="_blank" style="color:var(--accent)">Exploit DB, Metasploit modules, Nuclei templates</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/cvelistV5" target="_blank" style="color:var(--accent)">CVE List</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/redhat_vex_feed" target="_blank" style="color:var(--accent)">Red Hat VEX</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/ghsa_cve" target="_blank" style="color:var(--accent)">GitHub GHSA</a></li>
+                        <li class="faq-li"><a href="https://github.com/lucacapacci/cve_news" target="_blank" style="color:var(--accent)">News</a></li>
+                    </ul>
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">Sometimes official sources provide more than one CVSS score for a single CVE, but you are only showing one.</span>
+                <p class="faq-answer">
+                    Sometimes less is more. To avoid noise, the tool prioritizes the official primary metric from the NVD and favors the most recent CVSS version (e.g., CVSS v4.0 or v3.1 over v2.0).
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">Where are you getting your PoCs from?</span>
+                <p class="faq-answer">
+                    Currently, PoC research is aggregated from the following sources:
+                    <ul class="faq-ul">
+                    <li class="faq-li"><strong>NVD Reference Tags:</strong> Specific links tagged as "Exploit" within the official NVD record.</li>
+                    <li class="faq-li"><strong>CISA ADP:</strong> Specific links tagged as "Exploit" within the official CISA ADP record.</li>
+                    <li class="faq-li"><strong>Exploit-DB:</strong> Entries from the <a href="https://www.exploit-db.com/" target="_blank" style="color:var(--accent)">OffSec exploit database</a>.</li>
+                    <li class="faq-li"><strong>Metasploit:</strong> Modules from <a href="https://docs.metasploit.com/docs/modules.html" target="_blank" style="color:var(--accent)">Rapid7 Metasploit</a>.</li>
+                    <li class="faq-li"><strong>Nuclei:</strong> Templates from <a href="https://github.com/projectdiscovery/nuclei-templates" target="_blank" style="color:var(--accent)">ProjectDiscovery Nuclei</a>.</li>
+                    <li class="faq-li"><strong>GitHub:</strong> The awesome <a href="https://github.com/nomi-sec/PoC-in-GitHub" target="_blank" style="color:var(--accent)">nomi-sec/PoC-in-GitHub</a> repository.</li>
+                </ul>
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">Are you checking if the PoCs are safe?</span>
+                <p class="faq-answer">
+                    <strong>Absolutely not.</strong> These links are provided for research and intelligence purposes only. You should never execute code found in these repositories without first manually auditing the content in a secured, isolated environment.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">Neat UI, but I don't give a s**t about it. I want APIs.</span>
+                <p class="faq-answer">
+                     Technically, this tool has no backend, which means there are no APIs to call. However, feel free to build any custom script that directly queries our data sources, with no usage limits.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">What is the license?</span>
+                <p class="faq-answer">
+                    <strong>Apache 2.0.</strong> In short: you can use, modify, and distribute this for personal or commercial purposes. You don't owe me anything, but you must include the original copyright notice and license text. No warranties provided—if it breaks, you own both parts. You can bore youself with the full license <a href="https://github.com/lucacapacci/Vulnerability-Intelligence-Hub/blob/main/LICENSE" target="_blank" style="color:var(--accent)">here</a>.
+                </p>
+            </div>
+
+            <div class="faq-item">
+                <span class="faq-question">I found a bug or I have a suggestion to improve the tool.</span>
+                <p class="faq-answer">
+                    Awesome. Feel free to file an issue on <a href="https://github.com/lucacapacci/Vulnerability-Intelligence-Hub/issues" target="_blank" style="color:var(--accent)">GitHub</a> or reach out to me on <a href="https://www.linkedin.com/in/lucacapacci/" target="_blank" style="color:var(--accent)">LinkedIn</a>.
+                </p>
+            </div>
+
+        </section>
+    </div>
+</main>
+
+<!-- DYNAMIC FOOTER CONTAINER -->
+<div id="footer-container"></div>
+
+<!-- External Script -->
+<script src="script.js"></script>
+</body>
+</html>

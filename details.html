@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://redhatproductsecurity.github.io/cvss-v4-calculator/cvss40.js"></script>
+    <title>Vulnerability Details - VintHub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="custom-scrollbar" data-page="details">
+
+<div id="loading" style="display:none;">Fetching vulnerability data...</div>
+
+<main class="dashboard" id="dashboard">
+    <div class="span-3 kev-alert" id="kevAlert">
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <span style="font-size: 2.2rem;">⚠️</span>
+            <div>
+                <div style="font-weight: 900; font-size: 1.2rem; letter-spacing: 0.05em;">KNOWN EXPLOITED VULNERABILITY</div>
+                <div id="kevDate" style="color: #fecaca; font-weight: 500;">Added to Catalog on: -</div>
+            </div>
+        </div>
+        
+        <div id="kevRansomware">
+            ☣️ KNOWN RANSOMWARE CAMPAIGN USE
+        </div>
+    </div>
+
+    <div class="card span-25">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <h2 class="hero-id" id="displayId">CVE-0000-0000</h2>
+            <div style="text-align: right;">
+                <label class="label">CVE/NVD Published Date</label>
+                <div id="displayPubDate" class="value" style="font-size: 0.9rem;">-</div>
+            </div>
+        </div>
+        <div style="margin-top: 1.5rem;">
+            <label class="label">Description</label>
+            <div id="displayDesc" style="line-height: 1.6; font-size: 0.95rem; word-break: break-word;">-</div>
+        </div>
+        <div style="margin-top: 1rem;">
+            <label class="label">Affected Products</label>
+            <div class="value" id="displayProducts" style="color: var(--brand-accent)">-</div>
+            <!-- Version Checker Section -->
+            <div id="versionCheckerSection" style="display:none; margin-top: 24px;">
+                <h3 class="label">Version Checker</h3>
+                
+                <div style="background: var(--brand-card, #0f172a); border: 1px solid var(--brand-border); padding: 16px; border-radius: 8px;">
+                    <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 200px;">
+                            <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Product</label>
+                            <select id="vcProduct"></select>
+                        </div>
+                        <div style="flex: 0.7; min-width: 200px;">
+                            <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Version</label>
+                            <input type="text" id="vcVersion" placeholder="Enter version (e.g. 1.2.3)">
+                        </div>
+                        <div style="display: flex; align-items: flex-end; padding-bottom: 1px;">
+                            <button id="vcSubmit" style="padding: 8px 16px; height: 35px; background: #475569; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-top: 20px; font-family: 'Space Grotesk', system-ui, sans-serif;">Check Status</button>
+                        </div>
+                    </div>
+                    <div id="vcResult" style="margin-top: 14px; font-weight: 700; font-size: 0.85rem;"></div>
+                </div>
+            </div>
+
+            <!-- Raw Data Block -->
+            <div style="margin-top: 16px;">
+                <button id="btnViewAffectedRaw" style="display:none; font-size: 0.75rem; padding: 4px 8px; cursor: pointer; background: var(--brand-input); color: #f1f5f9; border: 1px solid var(--brand-border); border-radius: 4px; transition: 0.2s; font-family: 'Space Grotesk', system-ui, sans-serif;">View all affected versions</button>
+                <pre id="rawAffectedData" style="display:none; background: #020617; color: #a5b4fc; padding: 12px; border-radius: 6px; font-size: 0.8rem; overflow-x: auto; margin-top: 10px; border: 1px solid var(--brand-border); font-family: monospace;"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div class="card span-05" style="text-align: center; align-self: start;">
+        <label class="label">CVSS Base Score</label>
+        <div style="font-size: 4rem; font-weight: 900;" id="displayScore">0.0</div>
+        <div id="displaySevBadge" class="badge-large">UNKNOWN</div>
+    </div>
+
+    <div class="card span-3">
+        <label class="label">CVSS Vector</label>
+        <div class="vector-box" id="displayVector">-</div>
+        <div id="displayMetrics" class="metrics-grid-cvss"></div>
+    </div>
+
+    <div class="card span-1">
+        <label class="label">Likelihood of Exploitation (EPSS)</label>
+        <div class="value" style="font-size: 2rem; color: #f2f5ff; margin-top: 10px;" id="displayEpss">-</div>
+    </div>
+
+    <div class="card span-1">
+        <label class="label">Weakness / Attack Pattern</label>
+        <div id="weaknessContainer" style="margin-top: 10px;">-</div>
+    </div>
+
+    <div class="card span-1">
+        <label class="label">SSVC Decision</label>
+        <div id="displaySsvcDec" class="badge-large" style="width:100%; text-align:center; box-sizing:border-box;">N/A</div>
+        <div id="displaySsvcVector" class="vector-box" style="margin-top:15px; font-size: 0.75rem;">-</div>
+        <div id="ssvcExpansion" class="metrics-grid" style="margin-top:15px;"></div>
+    </div>
+
+    <div class="card span-05">
+        <label class="label">Links</label>
+        <div id="linkContainer" style="margin-top:10px; display: flex; flex-direction: column; gap: 8px;"></div>
+    </div>
+
+    <div class="card span-15">
+        <label class="label">Proof of Concepts</label>
+        <div id="pocContainer" class="poc-grid"></div>
+    </div>
+
+    <div class="card span-1">
+        <label class="label">BOD 26-04 FIX SLA</label>
+        <div class="badge-large" style="margin-top: 10px; margin-bottom: 4px; background: rgba(0, 0, 0, 0.2); width: 100%; box-sizing: border-box; font-weight: 200; text-align: center;">
+            <table style="margin: 0 auto; border-collapse: collapse; border: none; background: transparent; width: auto">
+                <tr style="font-size: 15px; background: transparent;">
+                    <td style="text-align: right; vertical-align: top; white-space: nowrap; padding-right: 10px; border: none;">Public :</td>
+                    <td id="bodSlaPublic" style="font-weight: 800; text-align: left; border: none;">N/A</td>
+                </tr>
+                <tr style="font-size: 15px; background: transparent;">
+                    <td style="text-align: right; vertical-align: top; white-space: nowrap; padding-right: 10px; border: none;">Internal :</td>
+                    <td id="bodSlaInternal" style="font-weight: 800; text-align: left; border: none;">N/A</td>
+                </tr>
+            </table>
+        </div>
+        <div id="bodExpansion" class="metrics-grid"></div>
+    </div>
+
+
+    <div class="card span-3">
+        <label class="label">References</label>
+        <ul id="refList" class="ref-list"></ul>
+    </div>
+    <div class="card span-3">
+        <label class="label">Mentions in News</label>
+        <div class="articles-section">
+            <ul id="newsContainer" class="article-list">
+                <li><span style="color: #94a3b8">Loading news...</span></li>
+            </ul>
+        </div>
+    </div>
+</main>
+
+<div id="footer-container"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

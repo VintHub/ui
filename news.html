@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en"> 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://redhatproductsecurity.github.io/cvss-v4-calculator/cvss40.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
+    <title>Vulnerability Intelligence Hub - News</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="custom-scrollbar" data-page="news">
+    <div class="hero-content">
+        <div class="hero-glow"></div>
+        <h1>
+             VintHub <span class="gradient-text">News</span> 
+        </h1>
+    </div>
+
+<section style="max-width: 1400px; margin: 2rem auto 0 auto; padding: 0 2rem;">
+    <div style="border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 1.25rem 1.5rem;">
+        <h4 style="margin: 0 0 0.5rem 0; color: var(--accent); font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Vulnerability Sightings</h4>
+        <p style="margin: 0; color: var(--text-main); font-size: 0.95rem; line-height: 1.5; opacity: 0.9;">
+            This feed provides real-time tracking of vulnerabilities that have recently been added to the CISA KEV catalog or have been surfaced across cybersecurity news outlets.
+        </p>
+    </div>
+</section>
+
+<div id="loading">
+    <div>Aggregating latest vulnerability news...</div>
+    <div id="status-text">Initializing search...</div>
+</div>
+
+<main class="news-dashboard" id="dashboard" style="display: none;">
+</main>
+
+<div class="load-more-container" id="loadMoreContainer">
+    <button class="btn-load-more" id="loadMoreBtn" onclick="loadMore()">Load More ↓</button>
+</div>
+
+<!-- DYNAMIC FOOTER CONTAINER -->
+<div id="footer-container"></div>
+
+<script src="script.js"></script>
+</body>
+</html>

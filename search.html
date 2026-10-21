@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VintHub - Vulnerability Intelligence Hub</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CVSS v4 Calculator -->
+    <script src="https://redhatproductsecurity.github.io/cvss-v4-calculator/cvss40.js"></script>
+    
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="custom-scrollbar" data-page="search">
+
+<main class="flex-grow">
+    <div class="hero-content">
+        <div class="hero-glow"></div>
+        <h1>
+             VintHub <span class="gradient-text">Search</span> 
+        </h1>
+    </div>
+    <div class="container search-container">
+        <textarea id="cveInput" placeholder="Enter any text containing CVE IDs (e.g. CVE-2024-1234)..."></textarea>
+        <div id="status" style="font-size: 0.85rem; color: #94a3b8; font-weight: 500;"></div>
+        
+        <div class="toolbar">
+            <button class="btn-primary" onclick="startAnalysis()">Run Analysis</button>
+            <button class="btn-export" onclick="exportCSV()">Export CSV</button>
+            <button class="btn-link" onclick="generatePermalink()">Copy Permalink</button>
+            <input type="text" id="tableFilter" class="filter-box" placeholder="Filter current results..." onkeyup="renderTable()">
+        </div>
+
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th style="width: 10%;" onclick="sortTable('cveId')">VULN ID ↕</th>
+                    <th style="width: 7%;" onclick="sortTable('published')">CVE/NVD Published ↕</th>
+                    <th style="width: 12%;" onclick="sortTable('products')">Product ↕</th>
+                    <th style="width: 7%;" onclick="sortTable('sev')">Severity ↕</th>
+                    <th style="width: 5%;" onclick="sortTable('score')">Score ↕</th>
+                    <th style="width: 10%;" onclick="sortTable('vector')">CVSS Vector ↕</th>
+                    <th style="width: 7%;" onclick="sortTable('ssvcDecision')">SSVC Decision ↕</th>
+                    <th style="width: 6%;" onclick="sortTable('ssvc')">SSVC Vector ↕</th>
+                    <th style="width: 6%;" onclick="sortTable('epssVal')">EPSS ↕</th>
+                    <th style="width: 7%;" onclick="sortTable('kev')">CISA KEV ↕</th>
+                    <th style="width: 4%;" onclick="sortTable('pocs')">PoCs ↕</th>
+                    <th style="width: 9%;" onclick="sortTable('bod')">BOD 26-04 SLA ↕</th>
+                    <th style="width: 7%;" onclick="sortTable('cwe')">CWE/CAPEC ↕</th>
+                    <th style="width: 6%;">Links</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</main>
+
+<div id="footer-container"></div>
+
+<div id="pocModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">PoC Links</h2>
+            <span class="close-modal" onclick="closePocModal()">&times;</span>
+        </div>
+        <div id="modalBody" class="modal-body"></div>
+    </div>
+</div>
+
+<!-- External Script for Dynamic Header & Footer Injection and Analysis Logic -->
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VintHub - Vulnerability Intelligence Hub</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- External Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="custom-scrollbar" data-page="home">
+
+    <!-- Header is now dynamically injected as the first child of body -->
+
+    <main class="flex-grow">
+        <!-- HERO SECTION -->
+        <section class="hero-section">
+            <!-- Background Accent Glow -->
+            <div class="hero-glow"></div>
+
+            <div class="hero-content">
+
+                <!-- Main Headline -->
+                <h1>
+                    Vulnerability Intelligence at the <span class="gradient-text">Speed of Exploitation</span>
+                </h1>
+
+                <!-- Subtitle Benefits -->
+                <p class="hero-subtitle">
+                    Unified threat prioritization combining CVSS ratings, CISA KEV status, EPSS likelihood predictions, SSVC decision frameworks, and verified proof-of-concept exploit correlation into one platform.
+                </p>
+
+                <!-- Interactive Quick Search Bar -->
+                <div id="search-section" class="search-section-wrap">
+                    <div class="search-card glow-accent">
+                        <label for="cve-search-input" class="search-label">
+                            Query CVE IDs
+                        </label>
+                        
+                        <div class="search-flex">
+                            <div class="input-wrapper">
+                                <input id="cve-search-input" type="text" 
+                                    placeholder="Enter any text containing CVE IDs (e.g. CVE-2026-63030)..." 
+                                    value="CVE-2026-63030"
+                                    class="cve-input">
+                                <button onclick="clearSearchInput()" class="clear-btn">
+                                    ✕
+                                </button>
+                            </div>
+
+                            <button onclick="executeAnalysis()" class="run-btn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                <span>RUN ANALYSIS</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FEATURE & BENEFIT GRID (SECURITY TEAMS) -->
+        <section class="features-section">
+            <div class="section-container">
+                
+                <div class="section-header-center">
+                    <div class="pill-badge pill-blue">ENGINEERED FOR SECURITY TEAMS</div>
+                    <h2 class="section-title">Beyond the CVSS Score</h2>
+                    <p class="section-desc">Get the full picture for every CVE, follow the ones that matter, and plug it all into your tools and workflows through a simple API.</p>
+                </div>
+
+                <div class="grid-4">
+
+                    <div class="card">
+                        <div class="card-icon icon-purple">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        </div>
+                        <h3>Exploit Correlation</h3>
+                        <p>
+                            Instantly locate functional proof-of-concepts, Metasploit modules, Nuclei vulnerability templates, and public PoCs to validate actual attack vector viability.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon icon-red">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <h3>Prioritize vulnerabilities that matter</h3>
+                        <p>
+                            EPSS and KEV tell you what attackers are doing. SSVC tells you what to do about it. The BOD 26-04 SLAs tells you by when. <br>All in a single response.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon icon-emerald">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+                        </div>
+                        <h3>Real-Time Threat News Feed</h3>
+                        <p>
+                            Stay informed with aggregated vulnerability news, vendor release advisories, and CISA announcements.
+                        </p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon icon-cyan">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h3>REST API Integration</h3>
+                        <p>
+                            Seamlessly incorporate aggregated threat metrics, PoC links, and SSVC ratings directly into SIEM dashboards, SOAR playbooks, and vulnerability management tools.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- RED TEAM: EXPLOIT CORRELATION -->
+        <section id="exploits-section" class="exploits-section">
+            <div class="red-glow"></div>
+
+            <div class="section-container" style="position: relative;">
+
+                <div class="section-header-center">
+                    <div class="pill-badge pill-red">
+                        BUILT FOR RED TEAMERS
+                    </div>
+
+                    <h2 class="section-title">
+                        From CVE ID to Working Exploit in One Search
+                    </h2>
+
+                    <p class="section-desc">
+                        Stop hunting through GitHub, forums and module trees. Search a CVE and get every Metasploit module, Nuclei template and public PoC we know about, with direct links, in a single list.
+                    </p>
+                </div>
+
+                <div class="grid-3">
+
+                    <div class="card">
+                        <div class="card-icon icon-red">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </div>
+                        <h3>Metasploit modules</h3>
+                        <p>Know right away whether a ready-to-run module exists, without searching msfconsole.</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon icon-orange">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <h3>Nuclei templates</h3>
+                        <p>Jump straight to templates for validating a vulnerability against targets at scale.</p>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-icon icon-purple">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                        </div>
+                        <h3>Public PoCs</h3>
+                        <p>Every public proof-of-concept linked in one place, so you can pick the one worth running.</p>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+        <!-- REST API SECTION -->
+        <section id="api-section" class="api-section">
+            <div class="api-flex">
+                
+                <!-- Left Details -->
+                <div class="api-left">
+                    <div class="pill-badge pill-emerald">
+                        ⚡ FOR DEFENDERS AND RED TEAMERS
+                    </div>
+                    
+                    <h2 class="section-title">
+                        Power Your Workflows with Programmatic Threat Intelligence
+                    </h2>
+
+                    <p class="section-desc">
+                        Fetch consolidated vulnerability intelligence, EPSS, KEV, SSVC and public PoCs directly into your custom tools, SOAR platforms, or scanner scripts.
+                    </p>
+
+                    <ul>
+                        <li>
+                            <span class="check-circle">✓</span>
+                            <span>Get complete CVE metadata, scores, and PoCs in a single API response.</span>
+                        </li>
+                        <li>
+                            <span class="check-circle">✓</span>
+                            <span>Query daily news programmatically.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Right Code Snippet Box -->
+                <div class="api-right">
+                    
+                    <!-- Code Snippet Header / Tabs -->
+                    <div class="code-header">
+                        <div class="code-tabs">
+                            <button onclick="switchApiTab('curl')" id="tab-curl" class="tab-btn active">cURL</button>
+                            <button onclick="switchApiTab('python')" id="tab-python" class="tab-btn">Python</button>
+                        </div>
+
+                        <button onclick="copyCodeSnippet()" class="copy-btn">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span id="copy-code-text">Copy</span>
+                        </button>
+                    </div>
+
+                    <!-- Code Snippet Blocks -->
+                    <div class="code-body">
+                        <!-- cURL Snippet -->
+                        <pre id="code-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://api.vinthub.io/cve/2026/CVE-2026-63030.json&quot;</span> \
+  -H <span class="c-amber">&quot;Accept: application/json&quot;</span></code></pre>
+
+                        <!-- Python Snippet -->
+                        <pre id="code-python" class="hidden"><code><span class="c-purple">import</span> requests
+
+cve_id = <span class="c-emerald">&quot;CVE-2026-63030&quot;</span>
+url = <span class="c-emerald">f&quot;https://api.vinthub.io/cve/{cve_id.split('-')[1]}/{cve_id}.json&quot;</span>
+
+response = requests.get(url)
+data = response.json()
+
+print(<span class="c-emerald">f&quot;SSVC Decision: {data['ssvc']['decision']}&quot;</span>)
+print(<span class="c-emerald">f&quot;EPSS Probability: {data['epss']['score']}&quot;</span>)
+print(<span class="c-emerald">f&quot;PoCs Found: {len(data['pocs'])}&quot;</span>)</code></pre>
+                    </div>
+
+                    <!-- JSON Sample Response Box -->
+                    <div class="json-sample">
+                        <div class="json-sample-title">SAMPLE JSON RESPONSE OBJECT:</div>
+                        <div class="json-sample-content custom-scrollbar"><code><span class="c-blue">{</span>
+  <span class="c-emerald">&quot;id&quot;</span>: <span class="c-amber">&quot;CVE-2026-63030&quot;</span>,
+  <span class="c-emerald">&quot;cvss_score&quot;</span>: <span class="c-purple">9.8</span>,
+  <span class="c-emerald">&quot;cisa_kev&quot;</span>: <span class="c-purple">true</span>,
+  <span class="c-emerald">&quot;epss_score&quot;</span>: <span class="c-purple">0.97271</span>,
+  <span class="c-emerald">&quot;ssvc_decision&quot;</span>: <span class="c-amber">&quot;ACT&quot;</span>,
+  <span class="c-emerald">&quot;pocs_count&quot;</span>: <span class="c-purple">77</span>
+<span class="c-blue">}</span></code></div>
+                    </div>
+
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- DYNAMIC FOOTER CONTAINER -->
+    <div id="footer-container"></div>
+
+    <!-- External Script -->
+    <script src="script.js"></script>
+</body>
+</html>
