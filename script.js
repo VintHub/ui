@@ -47,21 +47,20 @@ function getBestCvss(cvssList) {
 
     const getVersion = (item) => {
         const vec = item.vectorString || String(item.version || "");
-        // Dynamically extract major and minor version numbers (e.g., 3.1, 4.0, 5.0, etc.)
         const match = vec.match(/(?:CVSS:)?(\d+)(?:\.(\d+))?/i);
         if (match) {
             const major = parseInt(match[1], 10);
             const minor = match[2] ? parseInt(match[2], 10) : 0;
-            return major + (minor / 10); // Returns a precise float like 3.1, 3.0, 4.0, 5.2
+            return major + (minor / 10);
         }
         return 0;
     };
 
     const getSourcePriority = (item) => {
-        const src = (item.source || "").toUpperCase();
-        if (src.includes("NVD")) return 1;
-        if (src.includes("CVELIST") || src.includes("CNA")) return 2;
-        return 3;
+        const src = (item.source || "").trim().toUpperCase();
+        if (src === "NVD") return 1;                  // Exactly "NVD"
+        if (src === "CVELIST (CNA)") return 2;      // Exactly "CVELIST (CNA)"
+        return 3;                                   // Everything else
     };
 
     const sorted = [...cvssList].map((item, index) => ({
@@ -73,10 +72,10 @@ function getBestCvss(cvssList) {
 
     sorted.sort((a, b) => {
         if (b.version !== a.version) {
-            return b.version - a.version; // Newer/higher version first (e.g., 4.0 > 3.1 > 3.0 > 2.0)
+            return b.version - a.version; // Newer version first
         }
         if (a.sourcePrio !== b.sourcePrio) {
-            return a.sourcePrio - b.sourcePrio; // NVD (1) -> CVELIST/CNA (2) -> Others (3)
+            return a.sourcePrio - b.sourcePrio; // Exact "NVD" (1) then exact "CVELIST (CNA)" (2) then others (3)
         }
         return a.index - b.index; // Stable sort preserving original order
     });
