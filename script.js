@@ -41,6 +41,49 @@ async function fetchUnifiedCveData(cveId) {
     }
 }
 
+function getBestCvss(cvssList) {
+    if (!cvssList || !Array.isArray(cvssList) || cvssList.length === 0) return {};
+    if (cvssList.length === 1) return cvssList[0];
+
+    const getVersion = (item) => {
+        const vec = item.vectorString || String(item.version || "");
+        // Dynamically extract major and minor version numbers (e.g., 3.1, 4.0, 5.0, etc.)
+        const match = vec.match(/(?:CVSS:)?(\d+)(?:\.(\d+))?/i);
+        if (match) {
+            const major = parseInt(match[1], 10);
+            const minor = match[2] ? parseInt(match[2], 10) : 0;
+            return major + (minor / 10); // Returns a precise float like 3.1, 3.0, 4.0, 5.2
+        }
+        return 0;
+    };
+
+    const getSourcePriority = (item) => {
+        const src = (item.source || "").toUpperCase();
+        if (src.includes("NVD")) return 1;
+        if (src.includes("CVELIST") || src.includes("CNA")) return 2;
+        return 3;
+    };
+
+    const sorted = [...cvssList].map((item, index) => ({
+        item,
+        index,
+        version: getVersion(item),
+        sourcePrio: getSourcePriority(item)
+    }));
+
+    sorted.sort((a, b) => {
+        if (b.version !== a.version) {
+            return b.version - a.version; // Newer/higher version first (e.g., 4.0 > 3.1 > 3.0 > 2.0)
+        }
+        if (a.sourcePrio !== b.sourcePrio) {
+            return a.sourcePrio - b.sourcePrio; // NVD (1) -> CVELIST/CNA (2) -> Others (3)
+        }
+        return a.index - b.index; // Stable sort preserving original order
+    });
+
+    return sorted[0].item;
+}
+
 function updateClearButtonVisibility() {
     const inputEl = document.getElementById('cve-search-input');
     const clearBtn = document.querySelector('.clear-btn');
@@ -315,7 +358,7 @@ async function startAnalysis() {
         const published = data.published_date?.nvd || data.published_date?.cveorg || "Unpublished";
         const products = data.products || "N/A";
         
-        const cvssObj = data.cvss?.[0] || {};
+        const cvssObj = getBestCvss(data.cvss);
         const score = cvssObj.baseScore || 0;
         const vector = cvssObj.vectorString || "N/A";
         const sev = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
@@ -891,7 +934,7 @@ async function startDetailsAnalysis() {
         preRaw.style.display = 'none';
     }
 
-    const cvssObj = data.cvss?.[0] || {};
+    const cvssObj = getBestCvss(data.cvss);
     const score = cvssObj.baseScore || 0;
     const sev = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
     const vector = cvssObj.vectorString || "N/A";
@@ -1031,7 +1074,7 @@ async function fetchCveDetailsData(input) {
     const data = await fetchUnifiedCveData(input);
     if (!data) throw new Error("CVE not found");
 
-    const cvssObj = data.cvss?.[0] || {};
+    const cvssObj = getBestCvss(data.cvss);
     const score = cvssObj.baseScore !== undefined ? cvssObj.baseScore : 0;
     const severity = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
     const vector = cvssObj.vectorString || "Vector N/A";
