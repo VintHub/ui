@@ -32,7 +32,7 @@ async function fetchUnifiedCveData(cveId) {
     const parts = cveId.split('-');
     const year = parts[1];
     try {
-        const res = await fetch(`https://lucacapacci.github.io/cve/${year}/${cveId}.json`);
+        const res = await fetch(`https://cve.vinthub.io/${year}/${cveId}.json`);
         if (!res.ok) return null;
         return await res.json();
     } catch (e) {
@@ -1120,7 +1120,7 @@ async function fetchNextAvailableDay() {
         let d = String(currentDate.getUTCDate()).padStart(2, '0');
         let dateStr = `${y}-${m}-${d}`;
         
-        let url = `https://lucacapacci.github.io/cve_news/news/${y}/${m}/${dateStr}.json?${Math.random().toString(36).substring(2, 10)}`;
+        let url = `https://news.vinthub.io/${y}/${m}/${dateStr}.json?${Math.random().toString(36).substring(2, 10)}`;
         await updateStatus(`Checking news for ${dateStr}...`, 'status-text');
 
         try {
