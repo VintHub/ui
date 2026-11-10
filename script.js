@@ -961,7 +961,28 @@ async function startDetailsAnalysis() {
     document.getElementById('weaknessContainer').innerHTML = weaknessHtml.length > 0 ? weaknessHtml.join('') : "N/A";
 
     const finalPocs = cleanPocLinks(data.pocs || []);
-    document.getElementById('pocContainer').innerHTML = finalPocs.length > 0 ? finalPocs.map((url, i) => `<a href="${url}" class="poc-link" target="_blank">💀 #${i+1}</a>`).join('') : "-";
+    const safeId = input.replace(/[^a-zA-Z0-9]/g, '_');
+    let pocHtml = `-`;
+    if (finalPocs.length > 0) {
+        const pocLimit = 10;
+        if (finalPocs.length <= pocLimit) {
+            pocHtml = `<div class="poc-grid">${finalPocs.map((url, i) => `<a href="${url}" class="poc-link" target="_blank" title="${url}">💀 #${i+1}</a>`).join('')}</div>`;
+        } else {
+            const firstPocs = finalPocs.slice(0, pocLimit).map((url, i) => `<a href="${url}" class="poc-link" target="_blank" title="${url}">💀 #${i+1}</a>`).join('');
+            const restPocs = finalPocs.slice(pocLimit).map((url, i) => `<a href="${url}" class="poc-link" target="_blank" title="${url}">💀 #${pocLimit + i + 1}</a>`).join('');
+            pocHtml = `
+                <div class="poc-grid">
+                    ${firstPocs}
+                    <span id="more-pocs-${safeId}" style="display: none;">
+                        ${restPocs}
+                    </span>
+                    <a id="btn-pocs-${safeId}" href="javascript:void(0)" onclick="document.getElementById('more-pocs-${safeId}').style.display='contents'; this.style.display='none'; document.getElementById('btn-less-pocs-${safeId}').style.display='inline';" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: bold; align-self: center; margin-left: 4px;">+${finalPocs.length - pocLimit} more...</a>
+                    <a id="btn-less-pocs-${safeId}" href="javascript:void(0)" onclick="document.getElementById('more-pocs-${safeId}').style.display='none'; this.style.display='none'; document.getElementById('btn-pocs-${safeId}').style.display='inline';" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: bold; align-self: center; display: none; margin-left: 4px;">(show less)</a>
+                </div>
+            `;
+        }
+    }
+    document.getElementById('pocContainer').innerHTML = pocHtml;
 
     const refs = data.references || [];
     document.getElementById('refList').innerHTML = refs.length > 0 ? refs.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('') : "-";
@@ -1069,7 +1090,7 @@ async function updateStatus(text, id = 'status-text') {
     if (btn && btn.disabled) btn.innerText = text;
 }
 
-async function fetchCveDetailsData(input) {
+async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null) {
     const data = await fetchUnifiedCveData(input);
     if (!data) throw new Error("CVE not found");
 
@@ -1079,11 +1100,37 @@ async function fetchCveDetailsData(input) {
     const vector = cvssObj.vectorString || "Vector N/A";
     
     const finalPocs = cleanPocLinks(data.pocs || []);
-    let articles = (data.news || []).filter(art => !art.listOnly);
-    const hasLaterDiscussion = maxAllowedDate && articles.length > 0 && articles.every(art => art.date > maxAllowedDate);
+    
+    const formatNewsDate = (dStr) => {
+        if (!dStr) return "UNDEFINED";
+        const parts = dStr.split('-');
+        if (parts.length !== 3) return dStr;
+        const [y, m, d] = parts;
+        const months = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+        const monthName = months[parseInt(m, 10) - 1] || m;
+        return `${d} ${monthName} ${y}`;
+    };
+
+    let cveNews = (data.news || []).filter(art => !art.listOnly).map(art => ({
+        ...art,
+        date: art.date || fileDate
+    }));
+    let newsHubArticles = (newsFromNewsHub || []).filter(art => !art.listOnly).map(art => ({
+        ...art,
+        date: art.date || fileDate
+    }));
+
+    let articleMap = new Map();
+    [...cveNews, ...newsHubArticles].forEach(art => {
+        if (art && art.link) articleMap.set(art.link, art);
+    });
+    let articles = Array.from(articleMap.values());
+    articles.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+    let hasLaterDiscussion = maxAllowedDate && articles.length > 0 && articles.every(art => (art.date || "") > maxAllowedDate);
 
     if (maxAllowedDate) {
-        articles = articles.filter(art => art.date <= maxAllowedDate);
+        articles = articles.filter(art => !art.date || art.date <= maxAllowedDate);
     }
     articles.sort((a, b) => new Date(b.date) - new Date(a.date));
 
@@ -1131,7 +1178,7 @@ async function fetchNextAvailableDay() {
                     const hasNewsArticle = Array.isArray(data[cve]) && data[cve].some(item => !item.listOnly);
                     if (hasNewsArticle && !seenCves.has(cve)) {
                         seenCves.add(cve);
-                        dayCves.push({ id: cve, date: dateStr });
+                        dayCves.push({ id: cve, date: dateStr, news: data[cve] });
                     }
                 }
                 if (dayCves.length > 0) foundDate = dateStr;
@@ -1170,7 +1217,7 @@ async function renderDay(dayData) {
         await updateStatus(`Processing info for ${cveId}... (${percent}%)`);
         
         try {
-            const details = await fetchCveDetailsData(cveId);
+            const details = await fetchCveDetailsData(cveId, cves[i].news, cves[i].date);
             if (details.hasLaterDiscussion) continue;
 
             processedDetails.push(details);
@@ -1275,18 +1322,65 @@ async function renderDay(dayData) {
     });
 
     for (const details of processedDetails) {
-        const pocHtml = details.pocs.length > 0 
-            ? `<div class="poc-grid">${details.pocs.map((url, i) => `<a href="${url}" class="poc-link" target="_blank" title="${url}">💀 #${i+1}</a>`).join('')}</div>` 
-            : `<span style="color: var(--text-muted); font-size: 0.85rem;">No public PoCs</span>`;
+        const safeId = details.id.replace(/[^a-zA-Z0-9]/g, '_');
 
-        const articlesHtml = details.articles.length > 0
-            ? details.articles.map(art => `
+        const formatNewsDate = (dStr) => dStr || "UNDEFINED";
+
+        let pocHtml = `<span style="color: var(--text-muted); font-size: 0.85rem;">No public PoCs</span>`;
+        if (details.pocs.length > 0) {
+            const pocLimit = 10;
+            if (details.pocs.length <= pocLimit) {
+                pocHtml = `<div class="poc-grid">${details.pocs.map((url, i) => `<a href="${url}" class="poc-link" target="_blank" title="${url}">💀 #${i+1}</a>`).join('')}</div>`;
+            } else {
+                const firstPocs = details.pocs.slice(0, pocLimit).map((url, i) => `<a href="${url}" class="poc-link" target="_blank" title="${url}">💀 #${i+1}</a>`).join('');
+                const restPocs = details.pocs.slice(pocLimit).map((url, i) => `<a href="${url}" class="poc-link" target="_blank" title="${url}">💀 #${pocLimit + i + 1}</a>`).join('');
+                pocHtml = `
+                    <div class="poc-grid">
+                        ${firstPocs}
+                        <span id="more-pocs-${safeId}" style="display: none;">
+                            ${restPocs}
+                        </span>
+                        <a id="btn-pocs-${safeId}" href="javascript:void(0)" onclick="document.getElementById('more-pocs-${safeId}').style.display='contents'; this.style.display='none'; document.getElementById('btn-less-pocs-${safeId}').style.display='inline';" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: bold; align-self: center; margin-left: 4px;">+${details.pocs.length - pocLimit} more...</a>
+                        <a id="btn-less-pocs-${safeId}" href="javascript:void(0)" onclick="document.getElementById('more-pocs-${safeId}').style.display='none'; this.style.display='none'; document.getElementById('btn-pocs-${safeId}').style.display='inline';" style="color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: bold; align-self: center; display: none; margin-left: 4px;">(show less)</a>
+                    </div>
+                `;
+            }
+        }
+
+        let articlesHtml = `<li><span style="color: var(--text-muted)">No news history available.</span></li>`;
+        if (details.articles.length > 0) {
+            const articleLimit = 5;
+            const firstArticles = details.articles.slice(0, articleLimit).map(art => `
                 <li>
-                    <span class="article-date">${art.date}</span>
+                    <span class="article-date">${formatNewsDate(art.date)}</span>
                     <a href="${art.link}" target="_blank">${art.title}</a>
                 </li>
-            `).join('')
-            : `<li><span style="color: var(--text-muted)">No tracking history available.</span></li>`;
+            `).join('');
+
+            if (details.articles.length <= articleLimit) {
+                articlesHtml = firstArticles;
+            } else {
+                const restArticles = details.articles.slice(articleLimit).map(art => `
+                    <li style="margin-bottom: 10px;">
+                        <span class="article-date">${formatNewsDate(art.date)}</span>
+                        <a href="${art.link}" target="_blank">${art.title}</a>
+                    </li>
+                `).join('');
+
+                articlesHtml = `
+                    ${firstArticles}
+                    <div id="more-articles-${safeId}" style="display: none;">
+                        ${restArticles}
+                    </div>
+                    <li id="li-btn-articles-${safeId}" style="list-style: none; ">
+                        <a href="javascript:void(0)" onclick="document.getElementById('more-articles-${safeId}').style.display='block'; this.parentElement.style.display='none'; document.getElementById('li-btn-less-articles-${safeId}').style.display='block';" style="color: var(--accent); text-decoration: none; font-weight: bold; font-size: 0.9rem;">+${details.articles.length - articleLimit} more articles...</a>
+                    </li>
+                    <li id="li-btn-less-articles-${safeId}" style="list-style: none; margin-top: 0.5rem; display: none;">
+                        <a href="javascript:void(0)" onclick="document.getElementById('more-articles-${safeId}').style.display='none'; this.parentElement.style.display='none'; document.getElementById('li-btn-articles-${safeId}').style.display='block';" style="color: var(--accent); text-decoration: none; font-weight: bold; font-size: 0.9rem;">(show less)</a>
+                    </li>
+                `;
+            }
+        }
         
         const kevHtml = details.isKev ? `<span class="badge-large kev-badge" title="Added to CISA KEV on ${details.kevDate}">⚠️ KEV</span>` : '';
         const ransomwareHtml = details.knownRansomware ? `<span class="badge-large ransomware-badge" title="Known Ransomware Campaign Use">☣️ Ransomware</span>` : '';
