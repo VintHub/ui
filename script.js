@@ -1140,6 +1140,36 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
     const knownRansomware = kevInfo.ransomware_campaign_use || false;
     const products = data.products || "N/A";
 
+    // Extract vendors with fallback to products
+    let vendorsArr = [];
+    if (data.affected?.cna_affected) {
+        data.affected.cna_affected.forEach(item => {
+            if (item.vendor) vendorsArr.push(item.vendor);
+        });
+    }
+    if (vendorsArr.length === 0 && data.affected?.nvd_cpes) {
+        data.affected.nvd_cpes.forEach(node => {
+            if (node.nodes) {
+                node.nodes.forEach(n => {
+                    if (n.cpeMatch) {
+                        n.cpeMatch.forEach(m => {
+                            const parts = (m.criteria || "").split(':');
+                            if (parts.length >= 5 && parts[3] && parts[3] !== '*' && parts[3] !== '-') {
+                                vendorsArr.push(parts[3].replace(/_/g, ' '));
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+    let uniqueVendors = [...new Set(vendorsArr.map(v => {
+        const trimmed = v.trim();
+        if (!trimmed) return "";
+            return /[A-Z]/.test(trimmed) ? trimmed : capitalize(trimmed);
+    }).filter(Boolean))];
+    const vendors = uniqueVendors.length > 0 ? uniqueVendors.join(', ') : products;
+
     return {
         id: input,
         score: score !== 0 ? score.toFixed(1) : "Score N/A",
@@ -1151,7 +1181,8 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
         isKev: isKev,
         kevDate: kevDate,
         knownRansomware: knownRansomware,
-        products: products
+        products: products,
+        vendors: vendors
     };
 }
 
@@ -1208,7 +1239,7 @@ async function renderDay(dayData) {
             INFO: { total: 0, kev: 0, poc: 0 },
             UNKNOWN: { total: 0, kev: 0, poc: 0 }
         },
-        products: new Set()
+        vendors: new Set()
     };
 
     for (let i = 0; i < cves.length; i++) {
@@ -1230,10 +1261,10 @@ async function renderDay(dayData) {
             if (details.isKev) stats.severities[sev].kev++;
             if (details.pocs && details.pocs.length > 0) stats.severities[sev].poc++;
             
-            if (details.products && details.products !== "N/A") {
-                details.products.split(',').forEach(p => {
-                    if (p.trim()) stats.products.add(p.trim());
-                });
+            if (details.vendors && details.vendors !== "N/A") {
+                  details.vendors.split(',').forEach(v => {
+                      if (v.trim()) stats.vendors.add(v.trim());
+                  });
             }
         } catch (e) {
             console.warn(`Failed to process ${cveId}`, e);
@@ -1242,22 +1273,22 @@ async function renderDay(dayData) {
 
     if (processedDetails.length === 0) return;
 
-    let productsArr = Array.from(stats.products).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
-    let productsHtml = "None identified";
-    
-    if (productsArr.length > 0) {
-        let productsLimit = 10;
-        if (productsArr.length <= productsLimit) {
-            productsHtml = `<span style="color: var(--text-main);">${productsArr.join(', ')}</span>`;
+    let vendorsArr = Array.from(stats.vendors).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+    let vendorsHtml = "None identified";
+
+    if (vendorsArr.length > 0) {
+        let vendorsLimit = 10;
+        if (vendorsArr.length <= vendorsLimit) {
+            vendorsHtml = `<span style="color: var(--text-main);">${vendorsArr.join(', ')}</span>`;
         } else {
-            const firstN = productsArr.slice(0, productsLimit).join(', ');
-            const rest = ', ' + productsArr.slice(productsLimit).join(', ');
+            const firstN = vendorsArr.slice(0, vendorsLimit).join(', ');
+            const rest = ', ' + vendorsArr.slice(vendorsLimit).join(', ');
             const safeDateId = date.replace(/-/g, '');
-            
-            productsHtml = `
+
+            vendorsHtml = `
                 <span style="color: var(--text-main);">${firstN}</span><span id="more-prod-${safeDateId}" style="display: none; color: var(--text-main);">${rest}
                 <a href="javascript:void(0)" onclick="document.getElementById('more-prod-${safeDateId}').style.display='none'; document.getElementById('btn-more-${safeDateId}').style.display='inline';" style="color: var(--accent); text-decoration: none; font-weight: bold; margin-left: 4px;">(show less)</a></span>
-                <a id="btn-more-${safeDateId}" href="javascript:void(0)" onclick="document.getElementById('more-prod-${safeDateId}').style.display='inline'; this.style.display='none';" style="color: var(--accent); text-decoration: none; font-weight: bold; margin-left: 4px;"><br>+${productsArr.length - productsLimit} more...</a>
+                <a id="btn-more-${safeDateId}" href="javascript:void(0)" onclick="document.getElementById('more-prod-${safeDateId}').style.display='inline'; this.style.display='none';" style="color: var(--accent); text-decoration: none; font-weight: bold; margin-left: 4px;"><br>+${vendorsArr.length - vendorsLimit} more...</a>
             `;
         }
     }
@@ -1307,8 +1338,8 @@ async function renderDay(dayData) {
                 ${renderBadge('UNKNOWN', 'UNKNOWN')}
             </div>
             <div style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5;">
-                <strong>Products:</strong> <span style="color: var(--text-main);">${productsHtml}</span>
-            </div>
+              <strong>Affected:</strong> <span style="color: var(--text-main);">${vendorsHtml}</span>
+          </div>
         </div>
     `;
     dashboard.insertAdjacentHTML('beforeend', summaryHtml);
