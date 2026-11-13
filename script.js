@@ -873,6 +873,32 @@ async function startDetailsAnalysis() {
     document.getElementById('displayDesc').innerText = data.description || "Description not available.";
     document.getElementById('displayProducts').innerText = data.products || "N/A";
 
+    let titleContainer = document.getElementById('displayTitleContainer');
+    const rawTitle = data.title;
+    const hasValidTitle = rawTitle && typeof rawTitle === 'string' && rawTitle.trim() !== '' && rawTitle.trim().toUpperCase() !== 'N/A' && rawTitle.trim().toUpperCase() !== 'NONE';
+
+    if (hasValidTitle) {
+        if (!titleContainer) {
+            titleContainer = document.createElement('div');
+            titleContainer.id = 'displayTitleContainer';
+            titleContainer.style.marginBottom = '1.25rem';
+            titleContainer.innerHTML = `
+                <div class="label">Title</div>
+                <div id="displayTitle" style="font-size: 1rem; color: var(--text-main); line-height: 1.5; word-break: break-word;">${rawTitle}</div>
+            `;
+            const descEl = document.getElementById('displayDesc');
+            const targetNode = descEl.previousElementSibling || descEl;
+            targetNode.parentNode.insertBefore(titleContainer, targetNode);
+        } else {
+            document.getElementById('displayTitle').innerText = rawTitle;
+            titleContainer.style.display = 'block';
+        }
+    } else {
+        if (titleContainer) {
+            titleContainer.style.display = 'none';
+        }
+    }
+
     let rawAffected = data.affected || {};
     const vcSection = document.getElementById('versionCheckerSection');
     const btnRaw = document.getElementById('btnViewAffectedRaw');
