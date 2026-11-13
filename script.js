@@ -927,7 +927,7 @@ async function startDetailsAnalysis() {
             
             if (status === "vulnerable") {
                 resDiv.innerText = "VULNERABLE: the provided version falls within the affected ranges.";
-                resDiv.style.color = "var(--brand-critical)";
+                resDiv.style.color = "var(--brand-high)";
             } else if (status === "undetermined") {
                 resDiv.innerText = "UNDETERMINED: Vulnerability status cannot be strictly determined due to a lack of precise version data in the original record.";
                 resDiv.style.color = "var(--ssvc-track)";
