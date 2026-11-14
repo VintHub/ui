@@ -1191,8 +1191,8 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
     }
     let uniqueVendors = [...new Set(vendorsArr.map(v => {
         const trimmed = v.trim();
-        if (!trimmed) return "";
-            return /[A-Z]/.test(trimmed) ? trimmed : capitalize(trimmed);
+        if (!trimmed || trimmed.toUpperCase() === "N/A") return "";
+        return /[A-Z]/.test(trimmed) ? trimmed : capitalize(trimmed);
     }).filter(Boolean))];
     const vendors = uniqueVendors.length > 0 ? uniqueVendors.join(', ') : products;
 
