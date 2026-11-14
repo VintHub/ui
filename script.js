@@ -1079,7 +1079,28 @@ async function startDetailsAnalysis() {
     document.getElementById('linkContainer').innerHTML = `<a href="https://nvd.nist.gov/vuln/detail/${input}" class="btn-action" style="background:#475569" target="_blank">NVD ↗</a><a href="https://www.cve.org/CVERecord?id=${input}" class="btn-action" style="background:#312e81" target="_blank">CVE.org ↗</a>${kevMarkup}`;
 
     let articles = data.news || [];
-    articles.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const parts = input.split('-');
+    const year = parts[1];
+    if (year) {
+        try {
+            const newsRes = await fetch(`https://news.vinthub.io/cves/${year}/${input}.json`);
+            if (newsRes.ok) {
+                const additionalNews = await newsRes.json();
+                if (Array.isArray(additionalNews)) {
+                    let articleMap = new Map();
+                    [...articles, ...additionalNews].forEach(art => {
+                        if (art && art.link) {
+                            articleMap.set(art.link, art);
+                        }
+                    });
+                    articles = Array.from(articleMap.values());
+                }
+            }
+        } catch (e) {
+            console.error(`Failed to fetch additional news for ${input}:`, e);
+        }
+    }
+    articles.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
     
     const newsContainer = document.getElementById('newsContainer');
     newsContainer.innerHTML = articles.length > 0 ? articles.map(art => `
