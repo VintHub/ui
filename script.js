@@ -380,13 +380,13 @@ async function startAnalysis() {
             const eVal = ssvcMap.Exploitation.values[(ssvcFactors.Exploitation || "").toLowerCase()] || "N";
             const aVal = ssvcMap.Automatable.values[(ssvcFactors.Automatable || "").toLowerCase()] || "N";
             const tVal = (ssvcFactors["Technical Impact"] || "").toLowerCase() === "total" ? "T" : "P";
-            ssvcVec = `CISA:2.0.3/E:${eVal}/A:${aVal}/T:${tVal}`;
+            ssvcVec = `SSVCv2/E:${eVal}/A:${aVal}/T:${tVal}`;
         } else if (data.bod_sla?.factors) {
             const f = data.bod_sla.factors;
             const eVal = f.in_cisa_kev === "Yes" ? "A" : (pocs.length > 0 ? "P" : "N");
             const aVal = f.automatable === "Yes" ? "Y" : "N";
             const tVal = f.technical_impact === "Total" ? "T" : "P";
-            ssvcVec = `CISA:2.0.3/E:${eVal}/A:${aVal}/T:${tVal}`;
+            ssvcVec = `SSVCv2/E:${eVal}/A:${aVal}/T:${tVal}`;
         }
         const decision = getSSVCDecision(ssvcVec);
 
@@ -1055,13 +1055,22 @@ async function startDetailsAnalysis() {
         const eChar = ssvcMap.Exploitation.values[exploitation.toLowerCase()] || "N";
         const aChar = ssvcMap.Automatable.values[automatable.toLowerCase()] || "N";
         const tChar = techImpact.toLowerCase() === "total" ? "T" : "P";
-        ssvcVec = `CISA:2.0.3/E:${eChar}/A:${aChar}/T:${tChar}`;
+        ssvcVec = `SSVCv2/E:${eChar}/A:${aChar}/T:${tChar}`;
     }
 
     const dec = getSSVCDecision(ssvcVec);
     document.getElementById('displaySsvcDec').innerText = dec.label;
     document.getElementById('displaySsvcDec').className = `badge-large ssvc-${dec.key}`;
-    document.getElementById('displaySsvcVector').innerText = ssvcVec;
+
+    const ssvcVecEl = document.getElementById('displaySsvcVector');
+    if (ssvcVec !== "N/A") {
+        const todayDate = new Date().toISOString().split('T')[0];
+        const cisaUrl = `https://www.cisa.gov/ssvc-calculator#${ssvcVec}/${todayDate}T00:00:00Z/`;
+        ssvcVecEl.innerHTML = `<a href="${cisaUrl}" target="_blank" rel="noopener noreferrer" title="Open in CISA SSVC Calculator" style="color: inherit; text-decoration: none; transition: color 0.15s ease;" onmouseover="this.style.color='var(--brand-accent)'; this.style.textDecoration='underline';" onmouseout="this.style.color='inherit'; this.style.textDecoration='none';">${ssvcVec}</a>`;
+    } else {
+        ssvcVecEl.innerText = "N/A";
+    }
+
     document.getElementById('ssvcExpansion').innerHTML = ssvcMeta.join('');
 
     const bod = data.bod_sla || {};
