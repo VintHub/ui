@@ -1309,7 +1309,7 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
             severity: "UNKNOWN",
             vector: "Vector N/A",
             pocs: [],
-            articles: articles,
+           articles: articles,
             hasLaterDiscussion: hasLaterDiscussion,
             isKev: false,
             kevDate: "-",
@@ -1319,9 +1319,12 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
         };
     }
 
-    const cvssObj = getBestCvss(data.cvss);
-    const score = cvssObj.baseScore !== undefined ? cvssObj.baseScore : 0;
-    const severity = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
+    const cvssList = Array.isArray(data.cvss) ? data.cvss : [];
+    const cvssObj = getBestCvss(cvssList);
+    const hasScore = cvssObj.baseScore !== undefined && cvssObj.baseScore !== null;
+
+    const score = hasScore ? cvssObj.baseScore : 0;
+    const severity = hasScore ? (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase() : "UNKNOWN";
     const vector = cvssObj.vectorString || "Vector N/A";
     
     const finalPocs = cleanPocLinks(data.pocs || []);
@@ -1363,7 +1366,7 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
 
     return {
         id: input,
-        score: score !== 0 ? score.toFixed(1) : "Score N/A",
+        score: hasScore ? score.toFixed(1) : "Score N/A",
         severity: severity,
         vector: vector,
         pocs: finalPocs,
