@@ -1219,9 +1219,16 @@ function showCvssModal(cvssList) {
         return { num: 0, label: 'N/A' };
     };
 
+    const getSourcePriority = (item) => {
+        const src = (item.source || "").trim().toUpperCase();
+        if (src === "NVD") return 1;
+        if (src === "CVELIST (CNA)") return 2;
+        return 3;
+    };
+
     const sortedList = [...cvssList]
-        .map((item, idx) => ({ item, idx, ver: parseVersion(item) }))
-        .sort((a, b) => (b.ver.num - a.ver.num) || (a.idx - b.idx));
+        .map((item, idx) => ({ item, idx, ver: parseVersion(item), sourcePrio: getSourcePriority(item) }))
+        .sort((a, b) => (b.ver.num - a.ver.num) || (a.sourcePrio - b.sourcePrio) || (a.idx - b.idx));
 
     const tbody = document.getElementById('cvssModalBody');
     tbody.innerHTML = sortedList.map(({ item, ver }) => {
