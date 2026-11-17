@@ -725,28 +725,62 @@ function highlightJSON(jsonObj) {
 
 function compareVersions(v1, v2) {
     if (!v1 || !v2) return 0;
+
+    // Normalize by stripping any leading 'v' or 'V' (e.g., "V1.2.1.S0" -> "1.2.1.S0")
+    v1 = String(v1).replace(/^v/i, '');
+    v2 = String(v2).replace(/^v/i, '');
+    
     if (!isNaN(v1) && !isNaN(v2)) {
         const n1 = Number(v1), n2 = Number(v2);
         if (n1 !== n2) return n1 > n2 ? 1 : -1;
         return 0;
     }
-    const p1 = String(v1).split(/[\.\-_]/);
-    const p2 = String(v2).split(/[\.\-_]/);
+    
+    // Tokenize segments to handle things like "3p1" -> [3, "p", 1]
+    const tokenize = (str) => {
+        return String(str).split(/([^\d]+)/).filter(Boolean).map(part => {
+            return /^\d+$/.test(part) ? parseInt(part, 10) : part;
+        });
+    };
+
+    const p1 = tokenize(v1);
+    const p2 = tokenize(v2);
+    
     for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
         const s1 = p1[i];
         const s2 = p2[i];
-        if (s1 === undefined) return s2 === "0" ? 0 : -1;
-        if (s2 === undefined) return s1 === "0" ? 0 : 1;
-        const isNum1 = /^\d+$/.test(s1);
-        const isNum2 = /^\d+$/.test(s2);
+        
+        // If v1 runs out of parts, check if remaining parts in v2 are > 0
+        if (s1 === undefined) {
+            for (let j = i; j < p2.length; j++) {
+                if (typeof p2[j] === 'number' && p2[j] > 0) return -1;
+            }
+            return 0; 
+        }
+        
+        // If v2 runs out of parts, check if remaining parts in v1 are > 0
+        if (s2 === undefined) {
+            for (let j = i; j < p1.length; j++) {
+                if (typeof p1[j] === 'number' && p1[j] > 0) return 1;
+            }
+            return 0;
+        }
+
+        const isNum1 = typeof s1 === 'number';
+        const isNum2 = typeof s2 === 'number';
+
         if (isNum1 && isNum2) {
-            const n1 = parseInt(s1, 10);
-            const n2 = parseInt(s2, 10);
-            if (n1 !== n2) return n1 > n2 ? 1 : -1;
+            if (s1 !== s2) return s1 > s2 ? 1 : -1;
         } else if (isNum1 || isNum2) {
-            return isNum1 ? 1 : -1;
+            // A number takes precedence over a suffix tag (e.g., 3 vs 3p1 -> 3 comes first, 3p1 is greater)
+            if (isNum1) {
+                // s1 is number, s2 is string (e.g. "3" vs "3p") -> base number is equal, but string suffix makes it a patch/sub-version
+                // Actually, if comparing "3" and "3p1", tokenized: p1=[3], p2=[3, "p", 1]. 
+                // At i=1, s1 is undefined. Handled by out-of-bounds check above.
+            }
+            return isNum1 ? -1 : 1; 
         } else {
-            const cmp = s1.localeCompare(s2);
+            const cmp = String(s1).localeCompare(String(s2));
             if (cmp !== 0) return cmp < 0 ? -1 : 1;
         }
     }
@@ -806,8 +840,16 @@ function checkIsVulnerable(targetProduct, targetVersion, targetPlatform, rawAffe
                 let matchedAnyCnaVersion = false;
                 if (a.versions && a.versions.length > 0) {
                     for (const v of a.versions) {
-                        const start = v.version;
+                        let start = v.version;
                         let inRange = false;
+
+                        let lessThan = v.lessThan;
+
+                        // Quick helper to parse strings like "< 6.8.172"
+                        if (typeof start === 'string' && start.trim().startsWith('<')) {
+                            lessThan = start.replace('<', '').trim();
+                            start = undefined; // No lower bound constraint
+                        }
 
                         const isAll = start && start.toLowerCase() === 'all';
                         const isVague = !isAll && (!start || start === '*' || start === 'unspecified' || start === 'n/a' || start === '-' || start.toLowerCase().includes('custom') || start.toLowerCase().includes('reference'));
