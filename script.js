@@ -41,46 +41,47 @@ async function fetchUnifiedCveData(cveId) {
     }
 }
 
-function getBestCvss(cvssList) {
-    if (!cvssList || !Array.isArray(cvssList) || cvssList.length === 0) return {};
-    if (cvssList.length === 1) return cvssList[0];
-
+// Shared helper to sort any CVSS list consistently
+function sortCvssList(cvssList) {
     const getVersion = (item) => {
         const vec = item.vectorString || String(item.version || "");
         const match = vec.match(/(?:CVSS:)?(\d+)(?:\.(\d+))?/i);
         if (match) {
             const major = parseInt(match[1], 10);
             const minor = match[2] ? parseInt(match[2], 10) : 0;
-            return major + (minor / 10);
+            return { num: major + (minor / 10), label: `${major}.${minor}` };
         }
-        return 0;
+        // Fallback for v2 or text-only versions
+        if (/^AV:[NAL]\/AC:[LMH]\/Au:[NSM]\//i.test(vec) || (!vec.startsWith("CVSS:") && vec.includes("Au:"))) {
+            return { num: 2.0, label: '2.0' };
+        }
+        return { num: 0, label: String(item.version || 'N/A') };
     };
 
     const getSourcePriority = (item) => {
         const src = (item.source || "").trim().toUpperCase();
-        if (src === "NVD") return 1;                  // Exactly "NVD"
-        if (src === "CVELIST (CNA)") return 2;      // Exactly "CVELIST (CNA)"
-        return 3;                                   // Everything else
+        if (src === "NVD") return 1;
+        if (src === "CVELIST (CNA)") return 2;
+        return 3;
     };
 
-    const sorted = [...cvssList].map((item, index) => ({
-        item,
-        index,
-        version: getVersion(item),
-        sourcePrio: getSourcePriority(item)
-    }));
+    return [...cvssList]
+        .map((item, index) => ({
+            item,
+            index,
+            ver: getVersion(item),
+            sourcePrio: getSourcePriority(item)
+        }))
+        .sort((a, b) => {
+            if (b.ver.num !== a.ver.num) return b.ver.num - a.ver.num;
+            if (a.sourcePrio !== b.sourcePrio) return a.sourcePrio - b.sourcePrio;
+            return a.index - b.index;
+        });
+}
 
-    sorted.sort((a, b) => {
-        if (b.version !== a.version) {
-            return b.version - a.version; // Newer version first
-        }
-        if (a.sourcePrio !== b.sourcePrio) {
-            return a.sourcePrio - b.sourcePrio; // Exact "NVD" (1) then exact "CVELIST (CNA)" (2) then others (3)
-        }
-        return a.index - b.index; // Stable sort preserving original order
-    });
-
-    return sorted[0].item;
+function getBestCvss(cvssList) {
+    if (!cvssList || !Array.isArray(cvssList) || cvssList.length === 0) return {};
+    return sortCvssList(cvssList)[0].item;
 }
 
 function updateClearButtonVisibility() {
@@ -729,7 +730,7 @@ function compareVersions(v1, v2) {
     // Normalize by stripping any leading 'v' or 'V' (e.g., "V1.2.1.S0" -> "1.2.1.S0")
     v1 = String(v1).replace(/^v/i, '');
     v2 = String(v2).replace(/^v/i, '');
-    
+
     if (!isNaN(v1) && !isNaN(v2)) {
         const n1 = Number(v1), n2 = Number(v2);
         if (n1 !== n2) return n1 > n2 ? 1 : -1;
@@ -1261,9 +1262,7 @@ function showCvssModal(cvssList) {
         return { num: 0, label: 'N/A' };
     };
 
-    const sortedList = [...cvssList]
-        .map((item, idx) => ({ item, idx, ver: parseVersion(item) }))
-        .sort((a, b) => (b.ver.num - a.ver.num) || (a.idx - b.idx));
+    const sortedList = sortCvssList(cvssList);
 
     const tbody = document.getElementById('cvssModalBody');
     tbody.innerHTML = sortedList.map(({ item, ver }) => {
