@@ -959,7 +959,8 @@ async function startDetailsAnalysis() {
         preRaw.style.display = 'none';
     }
 
-    const cvssObj = getBestCvss(data.cvss);
+    const cvssList = Array.isArray(data.cvss) ? data.cvss : [];
+    const cvssObj = getBestCvss(cvssList);
     const score = cvssObj.baseScore || 0;
     const sev = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
     const vector = cvssObj.vectorString || "N/A";
@@ -968,6 +969,30 @@ async function startDetailsAnalysis() {
     document.getElementById('displaySevBadge').innerText = sev;
     document.getElementById('displaySevBadge').className = `badge-large sev-${sev.replace('/', '')}`;
     document.getElementById('displayVector').innerText = vector;
+
+    // Handle button next to "CVSS Score"
+    const scoreEl = document.getElementById('displayScore');
+    const scoreCard = scoreEl.closest('.card') || scoreEl.parentElement.parentElement;
+    const scoreLabelEl = scoreCard ? scoreCard.querySelector('.label') : null;
+    if (scoreLabelEl) {
+        scoreLabelEl.style.display = 'inline-flex';
+        scoreLabelEl.style.alignItems = 'center';
+        scoreLabelEl.style.gap = '0.45rem';
+
+        let extraCvssBtn = document.getElementById('extraCvssBtn');
+        if (!extraCvssBtn) {
+            extraCvssBtn = document.createElement('button');
+            extraCvssBtn.id = 'extraCvssBtn';
+            extraCvssBtn.type = 'button';
+            extraCvssBtn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+            extraCvssBtn.style.cssText = 'display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; padding:0; border-radius:9999px; background:#475569; color:#f8fafc; border:none; cursor:pointer; flex-shrink:0; transition:background 0.15s ease;';
+            extraCvssBtn.onmouseover = () => { extraCvssBtn.style.background = 'var(--brand-accent, #3b82f6)'; };
+            extraCvssBtn.onmouseout = () => { extraCvssBtn.style.background = '#475569'; };
+            scoreLabelEl.appendChild(extraCvssBtn);
+        }
+        extraCvssBtn.title = `View all CVSS scores (${cvssList.length})`;
+        extraCvssBtn.onclick = () => showCvssModal(cvssList);
+    }
 
     // Use vector parser to populate metrics breakdown
     const metricsHtml = parseCvssMetrics(vector);
@@ -1085,11 +1110,12 @@ async function startDetailsAnalysis() {
     document.getElementById('displayId').innerText = input;
     const pubDate = data.published_date?.nvd || data.published_date?.cveorg || "Unpublished";
     document.getElementById('displayPubDate').innerText = pubDate;
-    document.getElementById('linkContainer').innerHTML = `<a href="https://nvd.nist.gov/vuln/detail/${input}" class="btn-action" style="background:#475569" target="_blank">NVD ↗</a><a href="https://www.cve.org/CVERecord?id=${input}" class="btn-action" style="background:#312e81" target="_blank">CVE.org ↗</a>${kevMarkup}`;
 
     let articles = data.news || [];
     const parts = input.split('-');
     const year = parts[1];
+    document.getElementById('linkContainer').innerHTML = `<a href="https://cve.vinthub.io/${year}/${input}.json" class="btn-action" style="background:#0f766e" target="_blank">JSON API ↗</a><a href="https://nvd.nist.gov/vuln/detail/${input}" class="btn-action" style="background:#475569" target="_blank">NVD ↗</a><a href="https://www.cve.org/CVERecord?id=${input}" class="btn-action" style="background:#312e81" target="_blank">CVE.org ↗</a>${kevMarkup}`;
+
     if (year) {
         try {
             const newsRes = await fetch(`https://news.vinthub.io/cves/${year}/${input}.json`);
@@ -1121,6 +1147,100 @@ async function startDetailsAnalysis() {
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('dashboard').style.display = 'grid';
+}
+
+function showCvssModal(cvssList) {
+    let modal = document.getElementById('cvssModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'cvssModal';
+        modal.style.cssText = 'display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.7); backdrop-filter:blur(2px);';
+        modal.innerHTML = `
+            <div style="background:var(--brand-card, #1e293b); border:1px solid var(--border-color, #334155); border-radius:12px; margin:8% auto; padding:1.5rem; width:92%; max-width:960px; color:var(--text-main, #f8fafc); box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color, #334155); padding-bottom:0.75rem; margin-bottom:1rem;">
+                    <h3 style="margin:0; font-size:1.15rem;">All CVSS Scores</h3>
+                    <button id="closeCvssModal" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; line-height:1; cursor:pointer;">&times;</button>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%; table-layout:auto; border-collapse:collapse; text-align:left; font-size:0.875rem;">
+                        <thead>
+                            <tr style="border-bottom:1px solid var(--border-color, #334155); color:#94a3b8; text-transform:uppercase; font-size:0.75rem;">
+                                <th style="padding:0.6rem 0.75rem; width:75px; white-space:nowrap;">Version</th>
+                                <th style="padding:0.6rem 0.75rem; width:65px; white-space:nowrap; text-align:center;">Score</th>
+                                <th style="padding:0.6rem 0.75rem; width:105px; white-space:nowrap;">Severity</th>
+                                <th style="padding:0.6rem 0.75rem;">Vector</th>
+                                <th style="padding:0.6rem 0.75rem; width:180px;">Source</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cvssModalBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById('closeCvssModal').onclick = () => { modal.style.display = 'none'; };
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.style.display = 'none';
+        });
+    }
+
+    const parseVersion = (item) => {
+        const vec = (item.vectorString || "").trim();
+        const verField = String(item.version || "").trim();
+
+        // 1. Check explicit CVSS:X.Y prefix in vectorString
+        const prefixMatch = vec.match(/^CVSS:(\d+)(?:\.(\d+))?/i);
+        if (prefixMatch) {
+            const major = parseInt(prefixMatch[1], 10);
+            const minor = prefixMatch[2] ? parseInt(prefixMatch[2], 10) : 0;
+            return {
+                num: major + (minor / 10),
+                label: `${major}.${minor}`
+            };
+        }
+
+        // 2. Check explicit version property on the object (e.g., "2.0", "3.1")
+        const fieldMatch = verField.match(/^(\d+)(?:\.(\d+))?$/);
+        if (fieldMatch) {
+            const major = parseInt(fieldMatch[1], 10);
+            const minor = fieldMatch[2] ? parseInt(fieldMatch[2], 10) : 0;
+            return {
+                num: major + (minor / 10),
+                label: `${major}.${minor}`
+            };
+        }
+
+        // 3. Detect unprefixed CVSS v2 vector (starts with AV: and has Au: or v2 format)
+        if (/^AV:[NAL]\/AC:[LMH]\/Au:[NSM]\//i.test(vec) || (!vec.startsWith("CVSS:") && vec.includes("Au:"))) {
+            return { num: 2.0, label: '2.0' };
+        }
+
+        return { num: 0, label: 'N/A' };
+    };
+
+    const sortedList = [...cvssList]
+        .map((item, idx) => ({ item, idx, ver: parseVersion(item) }))
+        .sort((a, b) => (b.ver.num - a.ver.num) || (a.idx - b.idx));
+
+    const tbody = document.getElementById('cvssModalBody');
+    tbody.innerHTML = sortedList.map(({ item, ver }) => {
+        const s = item.baseScore !== undefined && item.baseScore !== null ? Number(item.baseScore) : 0;
+        const sev = (item.baseSeverity || getCvssSeverity(s)).toUpperCase();
+        const vec = item.vectorString || 'N/A';
+        const src = item.source || 'N/A';
+        return `
+            <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
+                <td style="padding:0.65rem 0.75rem; width:75px; white-space:nowrap; color:#94a3b8; font-weight:600;">${ver.label}</td>
+                <td style="padding:0.65rem 0.75rem; width:65px; white-space:nowrap; text-align:center; font-weight:bold;">${s > 0 ? s.toFixed(1) : '—'}</td>
+                <td style="padding:0.65rem 0.75rem; width:105px; white-space:nowrap;"><span class="badge sev-${sev.replace('/', '')}">${sev}</span></td>
+                <td style="padding:0.65rem 0.75rem; font-family:monospace; font-size:0.8rem; word-break:normal; overflow-wrap:anywhere;">${vec}</td>
+                <td style="padding:0.65rem 0.75rem; width:180px; color:#cbd5e1;">${src}</td>
+            </tr>
+        `;
+    }).join('');
+
+    modal.style.display = 'block';
 }
 
 // ==========================================
