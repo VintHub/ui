@@ -1219,16 +1219,9 @@ function showCvssModal(cvssList) {
         return { num: 0, label: 'N/A' };
     };
 
-    const getSourcePriority = (item) => {
-        const src = (item.source || "").trim().toUpperCase();
-        if (src === "NVD") return 1;
-        if (src === "CVELIST (CNA)") return 2;
-        return 3;
-    };
-
     const sortedList = [...cvssList]
-        .map((item, idx) => ({ item, idx, ver: parseVersion(item), sourcePrio: getSourcePriority(item) }))
-        .sort((a, b) => (b.ver.num - a.ver.num) || (a.sourcePrio - b.sourcePrio) || (a.idx - b.idx));
+        .map((item, idx) => ({ item, idx, ver: parseVersion(item) }))
+        .sort((a, b) => (b.ver.num - a.ver.num) || (a.idx - b.idx));
 
     const tbody = document.getElementById('cvssModalBody');
     tbody.innerHTML = sortedList.map(({ item, ver }) => {
@@ -1275,15 +1268,7 @@ async function updateStatus(text, id = 'status-text') {
 
 async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null) {
     const data = await fetchUnifiedCveData(input);
-    if (!data) throw new Error("CVE not found");
 
-    const cvssObj = getBestCvss(data.cvss);
-    const score = cvssObj.baseScore !== undefined ? cvssObj.baseScore : 0;
-    const severity = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
-    const vector = cvssObj.vectorString || "Vector N/A";
-    
-    const finalPocs = cleanPocLinks(data.pocs || []);
-    
     const formatNewsDate = (dStr) => {
         if (!dStr) return "UNDEFINED";
         const parts = dStr.split('-');
@@ -1294,10 +1279,10 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
         return `${d} ${monthName} ${y}`;
     };
 
-    let cveNews = (data.news || []).filter(art => !art.listOnly).map(art => ({
+    let cveNews = data ? (data.news || []).filter(art => !art.listOnly).map(art => ({
         ...art,
         date: art.date || fileDate
-    }));
+    })) : [];
     let newsHubArticles = (newsFromNewsHub || []).filter(art => !art.listOnly).map(art => ({
         ...art,
         date: art.date || fileDate
@@ -1317,13 +1302,36 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
     }
     articles.sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    if (!data) {
+        return {
+            id: input,
+            score: "Score N/A",
+            severity: "UNKNOWN",
+            vector: "Vector N/A",
+            pocs: [],
+            articles: articles,
+            hasLaterDiscussion: hasLaterDiscussion,
+            isKev: false,
+            kevDate: "-",
+            knownRansomware: false,
+            products: "N/A",
+            vendors: "N/A"
+        };
+    }
+
+    const cvssObj = getBestCvss(data.cvss);
+    const score = cvssObj.baseScore !== undefined ? cvssObj.baseScore : 0;
+    const severity = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
+    const vector = cvssObj.vectorString || "Vector N/A";
+    
+    const finalPocs = cleanPocLinks(data.pocs || []);
+    
     const kevInfo = data.cisa_kev || {};
     const isKev = kevInfo.in_cisa_kev || false;
     const kevDate = kevInfo.added_date || "-";
     const knownRansomware = kevInfo.ransomware_campaign_use || false;
     const products = data.products || "N/A";
 
-    // Extract vendors with fallback to products
     let vendorsArr = [];
     if (data.affected?.cna_affected) {
         data.affected.cna_affected.forEach(item => {
