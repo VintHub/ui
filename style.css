@@ -147,6 +147,7 @@ nav.main-nav {
     color: #ffffff;
     background-color: rgba(51, 65, 85, 0.6);
 }
+
 .nav-link.active-nav {
     background-color: var(--brand-accent);
     color: #ffffff;
@@ -989,6 +990,10 @@ footer {
 .label { color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; display: block; font-weight: 700; }
 .value { font-size: 1.1rem; font-weight: 600; }
 .hero-id { font-size: 2.5rem; font-weight: 800; color: var(--brand-accent); margin: 0; }
+a.hero-id:hover {
+  color: #f1f5f9;
+}
+
 .badge-large { padding: 8px 16px; border-radius: 6px; font-weight: 800; font-size: 1rem; display: inline-block; margin-top: 10px; text-transform: uppercase; }
 
 .vector-box { background: #0f172a; padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #94a3b8; border: 1px solid var(--brand-border); word-break: break-all; margin-top: 10px; }
