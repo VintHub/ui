@@ -472,7 +472,7 @@ function renderTable() {
         <tr>
             <td class="no-break">
                 <a href="./details.html#${item.cveId}" style="text-decoration: none;">
-                    <b style="color:var(--brand-accent)">${item.cveId}</b>
+                    <b style="color:var(--brand-accent)" onmouseover="this.style.color='#f1f5f9';" onmouseout="this.style.color='#3b82f6';">${item.cveId}</b>
                 </a>
             </td>
             <td style="color:#94a3b8; font-size: 0.75rem;">${item.published}</td>
