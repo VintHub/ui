@@ -344,9 +344,11 @@ async function startAnalysis() {
         if (status) status.innerText = `Working... ${processedCount} out of ${uniqueCves.length} done [${Math.round((processedCount / uniqueCves.length) * 100)}%]`;
         
         const data = await fetchUnifiedCveData(cveId);
-        if (!data) {
+        const isRejected = data && (data.state === "REJECTED" || data.status === "REJECTED" || data.cveMetadata?.state === "REJECTED" || data.cveMetadata?.status === "REJECTED");
+
+        if (!data || isRejected) {
             globalData.push({ 
-                cveId, isInvalid: true, published: "—", products: "—", cwe: "—", capec: "—",
+                cveId, isInvalid: !data, isRejected: !!isRejected, published: "—", products: "—", cwe: "—", capec: "—",
                 sev: "—", score: 0, vector: "—", ssvc: "—", 
                 ssvcDecision: { label: "—", key: "N/A" }, 
                 epss: "—", epssVal: 0, kev: "-", knownRansomware: false, pocs: [] 
@@ -363,8 +365,8 @@ async function startAnalysis() {
         const vector = cvssObj.vectorString || "N/A";
         const sev = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
 
-        const epssVal = data.epss?.score || 0;
-        const epss = data.epss?.score !== undefined ? (data.epss.score * 100).toFixed(3) + "%" : "N/A";
+        const epssVal = typeof data.epss?.score === 'number' && !isNaN(data.epss.score) ? data.epss.score : 0;
+        const epss = (typeof data.epss?.score === 'number' && !isNaN(data.epss.score)) ? (data.epss.score * 100).toFixed(3) + "%" : "N/A";
 
         const kevInfo = data.cisa_kev || {};
         const isKev = kevInfo.in_cisa_kev || false;
@@ -458,11 +460,27 @@ function renderTable() {
     });
 
     tbody.innerHTML = displayData.map(item => {
-        if (item.isInvalid) {
-            return `<tr>
-                <td class="no-break"><b style="color:#ef4444">${item.cveId}</b></td>
-                <td colspan="13" style="text-align:center; color:#94a3b8; letter-spacing: 0.1em; font-weight: bold; padding: 1rem; background: rgba(239, 68, 68, 0.05);">INVALID ID</td>
-            </tr>`;
+        if (item.isInvalid || item.isRejected) {
+            const label = item.isRejected ? "REJECTED" : "INVALID ID";
+            const color = item.isRejected ? "#f59e0b" : "#ef4444";
+            const bg = item.isRejected ? "rgba(245, 158, 11, 0.05)" : "rgba(239, 68, 68, 0.05)";
+            if (item.isInvalid) {
+                return `<tr>
+                    <td class="no-break"><b style="color:${color}">${item.cveId}</b></td>
+                    <td colspan="13" style="text-align:center; color:${item.isRejected ? '#f59e0b' : '#94a3b8'}; letter-spacing: 0.1em; font-weight: bold; padding: 1rem; background: ${bg};">${label}</td>
+                </tr>`;
+            }
+            else if (item.isRejected) {
+                return `<tr>
+                    <td class="no-break">
+                        <a href="./details.html#${item.cveId}" style="text-decoration: none;">
+                            <b style="color:${color}" onmouseover="this.style.color='#f1f5f9';" onmouseout="this.style.color='${color}';">${item.cveId}</b>
+                        </a>
+                    </td>
+                    <td colspan="13" style="text-align:center; color:${item.isRejected ? '#f59e0b' : '#94a3b8'}; letter-spacing: 0.1em; font-weight: bold; padding: 1rem; background: ${bg};">${label}</td>
+                </tr>`;
+
+            }
         }
         
         const isKev = item.kev !== '-';
@@ -907,13 +925,39 @@ async function startDetailsAnalysis() {
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('kevRansomware').style.display = 'none';
 
+    let rejectedAlert = document.getElementById('rejectedAlert');
+    if (rejectedAlert) rejectedAlert.style.display = 'none';
+
     const data = await fetchUnifiedCveData(input);
     if (!data) {
         document.getElementById('loading').innerHTML = `<span style="color:red">Error: CVE Data not found</span>`;
         return;
     }
 
-    document.getElementById('displayDesc').innerText = data.description || "Description not available.";
+    const isRejected = data.state === "REJECTED" || data.status === "REJECTED" || data.cveMetadata?.state === "REJECTED" || data.cveMetadata?.status === "REJECTED";
+    const dashboardEl = document.getElementById('dashboard');
+
+    if (isRejected) {
+        if (!rejectedAlert) {
+            rejectedAlert = document.createElement('div');
+            rejectedAlert.id = 'rejectedAlert';
+            rejectedAlert.style.cssText = 'display: flex; align-items: center; justify-content: space-between; background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; color: #f8fafc; gap: 1rem; flex-wrap: wrap; grid-column: 1 / -1;';
+        }
+        if (!dashboardEl.contains(rejectedAlert)) {
+            dashboardEl.insertBefore(rejectedAlert, dashboardEl.firstChild);
+        }
+        rejectedAlert.style.display = 'flex';
+        rejectedAlert.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.5rem;">🚫</span>
+                <div>
+                    <div style="font-weight: bold; font-size: 1.1rem; color: #f59e0b;">CVE IS REJECTED</div>
+                </div>
+            </div>
+        `;
+    }
+
+    document.getElementById('displayDesc').innerText = data.description || (isRejected ? "This record has been rejected." : "Description not available.");
     document.getElementById('displayProducts').innerText = data.products || "N/A";
 
     let titleContainer = document.getElementById('displayTitleContainer');
@@ -1082,7 +1126,7 @@ async function startDetailsAnalysis() {
     document.getElementById('refList').innerHTML = refs.length > 0 ? refs.map(url => `<li><a href="${url}" target="_blank">${url}</a></li>`).join('') : "-";
 
     const epssVal = data.epss?.score;
-    document.getElementById('displayEpss').innerText = epssVal !== undefined ? (epssVal * 100).toFixed(3) + "%" : "N/A";
+    document.getElementById('displayEpss').innerText = (typeof epssVal === 'number' && !isNaN(epssVal)) ? (epssVal * 100).toFixed(3) + "%" : "N/A";
 
     const kevInfo = data.cisa_kev || {};
     const isKev = kevInfo.in_cisa_kev || false;
@@ -1139,7 +1183,18 @@ async function startDetailsAnalysis() {
         ssvcVecEl.innerText = "N/A";
     }
 
-    document.getElementById('ssvcExpansion').innerHTML = ssvcMeta.join('');
+    if (isRejected) {
+        document.getElementById('displaySsvcDec').innerText = "N/A";
+        document.getElementById('displaySsvcDec').className = 'badge-large ssvc-N/A';
+        document.getElementById('displaySsvcVector').innerText = "N/A";
+        document.getElementById('ssvcExpansion').innerHTML = "";
+
+        document.getElementById('bodSlaPublic').innerText = "N/A";
+        document.getElementById('bodSlaInternal').innerText = "N/A";
+        document.getElementById('bodExpansion').innerHTML = "";
+
+        document.getElementById('ssvcExpansion').innerHTML = ssvcMeta.join('');
+    }
 
     const bod = data.bod_sla || {};
     document.getElementById('bodSlaPublic').innerText = bod.public || "N/A";
