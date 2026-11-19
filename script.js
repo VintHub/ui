@@ -1183,6 +1183,8 @@ async function startDetailsAnalysis() {
         ssvcVecEl.innerText = "N/A";
     }
 
+    document.getElementById('ssvcExpansion').innerHTML = ssvcMeta.join('');
+
     if (isRejected) {
         document.getElementById('displaySsvcDec').innerText = "N/A";
         document.getElementById('displaySsvcDec').className = 'badge-large ssvc-N/A';
