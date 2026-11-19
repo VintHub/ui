@@ -1019,7 +1019,7 @@ a.hero-id:hover {
 .vector-box { background: #0f172a; padding: 12px; border-radius: 6px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: #94a3b8; border: 1px solid var(--brand-border); word-break: break-all; margin-top: 10px; }
 
 .metrics-grid-cvss { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 15px; }
-.metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; margin-top: 15px; }
 .metric-item { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; border-left: 3px solid var(--brand-accent); }
 .metric-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
 .metric-val { font-size: 12px; font-weight: bold; }
