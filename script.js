@@ -121,10 +121,10 @@ function renderHeader() {
         <header>
             <div class="header-inner">
                 <a href="index.html" class="brand-logo">
-                    <img src="vinthub.svg" alt="VintHub">
+                    <img src="vinthub.svg" alt="Vulnerability Intelligence Hub">
                     <div class="brand-title-group">
-                        <span class="brand-title">VINTHUB</span>
-                        <span class="brand-subtitle">Vulnerability Intelligence Hub</span>
+                        <span class="brand-title">VULNERABILITY</span>
+                        <span class="brand-subtitle">Intelligence Hub</span>
                     </div>
                 </a>
                 <nav class="main-nav">
@@ -1344,15 +1344,15 @@ function showCvssModal(cvssList) {
 // ==========================================
 
 let currentDate = new Date();
-let maxAllowedDate = null;
 const hashDate = window.location.hash.replace('#', '').trim();
 if (/^\d{4}-\d{2}-\d{2}$/.test(hashDate)) {
     currentDate = new Date(`${hashDate}T00:00:00Z`);
-    maxAllowedDate = hashDate;
 } else {
     currentDate.setDate(currentDate.getDate() + 1);
 }
-let seenCves = new Set();
+let cveDetailsCache = new Map();
+
+let cveArticleHistory = new Map();
 
 async function updateStatus(text, id = 'status-text') {
     const el = document.getElementById(id);
@@ -1363,6 +1363,33 @@ async function updateStatus(text, id = 'status-text') {
 }
 
 async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null) {
+    const buildArticles = (baseNews) => {
+        const history = cveArticleHistory.get(input) || new Map();
+        // Only this day's hub articles may fall back to the file date (it is their real date).
+        const dayNews = (newsFromNewsHub || [])
+            .filter(art => !art.listOnly)
+            .map(art => ({ ...art, date: art.date || fileDate }));
+        // Same link already known (e.g. listed in two day files): keep ONE consistent date, the later one.
+        // An undated entry never overwrites a known date either.
+        [...history.values(), ...(baseNews || []), ...dayNews].forEach(art => {
+            if (!art || !art.link) return;
+            const prev = history.get(art.link);
+            if (!prev || !prev.date) { history.set(art.link, art); return; }
+            if (!art.date) { history.set(art.link, { ...art, date: prev.date }); return; }
+            const later = new Date(art.date) > new Date(prev.date) ? art.date : prev.date;
+            history.set(art.link, { ...art, date: later });
+        });
+        cveArticleHistory.set(input, history);
+        return Array.from(history.values())
+            .sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    };
+
+    if (cveDetailsCache.has(input)) {
+        const cached = cveDetailsCache.get(input);
+        const { baseNews, ...rest } = cached;
+        return { ...rest, articles: buildArticles(baseNews) };
+    }
+
     const data = await fetchUnifiedCveData(input);
 
     const formatNewsDate = (dStr) => {
@@ -1375,28 +1402,8 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
         return `${d} ${monthName} ${y}`;
     };
 
-    let cveNews = data ? (data.news || []).filter(art => !art.listOnly).map(art => ({
-        ...art,
-        date: art.date || fileDate
-    })) : [];
-    let newsHubArticles = (newsFromNewsHub || []).filter(art => !art.listOnly).map(art => ({
-        ...art,
-        date: art.date || fileDate
-    }));
-
-    let articleMap = new Map();
-    [...cveNews, ...newsHubArticles].forEach(art => {
-        if (art && art.link) articleMap.set(art.link, art);
-    });
-    let articles = Array.from(articleMap.values());
-    articles.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-    let hasLaterDiscussion = maxAllowedDate && articles.length > 0 && articles.every(art => (art.date || "") > maxAllowedDate);
-
-    if (maxAllowedDate) {
-        articles = articles.filter(art => !art.date || art.date <= maxAllowedDate);
-    }
-    articles.sort((a, b) => new Date(b.date) - new Date(a.date));
+    const baseNews = data ? (data.news || []).filter(art => !art.listOnly) : [];
+    const articles = buildArticles(baseNews);
 
     if (!data) {
         return {
@@ -1406,7 +1413,6 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
             vector: "Vector N/A",
             pocs: [],
            articles: articles,
-            hasLaterDiscussion: hasLaterDiscussion,
             isKev: false,
             kevDate: "-",
             knownRansomware: false,
@@ -1460,20 +1466,21 @@ async function fetchCveDetailsData(input, newsFromNewsHub = [], fileDate = null)
     }).filter(Boolean))];
     const vendors = uniqueVendors.length > 0 ? uniqueVendors.join(', ') : products;
 
-    return {
+    const result = {
         id: input,
         score: hasScore ? score.toFixed(1) : "Score N/A",
         severity: severity,
         vector: vector,
         pocs: finalPocs,
         articles: articles,
-        hasLaterDiscussion: hasLaterDiscussion,
         isKev: isKev,
         kevDate: kevDate,
         knownRansomware: knownRansomware,
         products: products,
         vendors: vendors
     };
+    cveDetailsCache.set(input, { ...result, baseNews });
+    return result;
 }
 
 async function fetchNextAvailableDay() {
@@ -1497,8 +1504,7 @@ async function fetchNextAvailableDay() {
                 let data = await res.json();
                 for (let cve in data) {
                     const hasNewsArticle = Array.isArray(data[cve]) && data[cve].some(item => !item.listOnly);
-                    if (hasNewsArticle && !seenCves.has(cve)) {
-                        seenCves.add(cve);
+                    if (hasNewsArticle) {
                         dayCves.push({ id: cve, date: dateStr, news: data[cve] });
                     }
                 }
@@ -1511,6 +1517,44 @@ async function fetchNextAvailableDay() {
     }
     
     return { date: foundDate, cves: dayCves };
+}
+
+function applyDayFilters(safeDateId) {
+    const container = document.getElementById(`day-cards-${safeDateId}`);
+    if (!container) return;
+
+    const activeSev = container.dataset.filterSev || 'ALL';
+    const activeVendor = container.dataset.filterVendor || 'ALL';
+
+    container.querySelectorAll('.news-card').forEach(card => {
+        const cardSev = card.dataset.severity || 'UNKNOWN';
+        const cardVendors = JSON.parse(card.dataset.vendors || '[]');
+        const matchesSev = activeSev === 'ALL' || cardSev === activeSev;
+        const matchesVendor = activeVendor === 'ALL' || cardVendors.includes(activeVendor);
+        card.style.display = (matchesSev && matchesVendor) ? '' : 'none';
+    });
+}
+
+function setDayFilter(safeDateId, type, value, btnEl) {
+    const container = document.getElementById(`day-cards-${safeDateId}`);
+    if (!container) return;
+
+    if (type === 'sev') container.dataset.filterSev = value;
+    if (type === 'vendor') container.dataset.filterVendor = value;
+
+    const rowId = type === 'sev' ? `sev-filters-${safeDateId}` : `vendor-filters-${safeDateId}`;
+    const rowEl = document.getElementById(rowId);
+    if (rowEl) {
+        rowEl.querySelectorAll('.filter-pill').forEach(btn => {
+            const isSelected = btn === btnEl;
+            btn.dataset.active = isSelected ? 'true' : 'false';
+            btn.style.background = isSelected ? 'var(--brand-accent, #3b82f6)' : 'rgba(148, 163, 184, 0.14)';
+            btn.style.color = isSelected ? '#ffffff' : 'var(--text-main)';
+            btn.style.borderColor = isSelected ? 'var(--brand-accent, #3b82f6)' : 'var(--border-color)';
+        });
+    }
+
+    applyDayFilters(safeDateId);
 }
 
 async function renderDay(dayData) {
@@ -1539,12 +1583,12 @@ async function renderDay(dayData) {
         
         try {
             const details = await fetchCveDetailsData(cveId, cves[i].news, cves[i].date);
-            if (details.hasLaterDiscussion) continue;
 
             processedDetails.push(details);
 
             let sev = details.severity || 'UNKNOWN';
-            if (sev.includes('N/A') || sev === 'NONE') sev = 'UNKNOWN';
+            if (sev === 'NONE') sev = 'INFO';
+            if (sev.includes('N/A')) sev = 'UNKNOWN';
             if (stats.severities[sev] === undefined) sev = 'UNKNOWN';
             
             stats.severities[sev].total++;
@@ -1613,12 +1657,41 @@ async function renderDay(dayData) {
         `;
     };
 
+    const safeDateId = date.replace(/-/g, '');
+    const sevOrder = [
+        { key: 'CRITICAL', label: 'Critical' },
+        { key: 'HIGH', label: 'High' },
+        { key: 'MEDIUM', label: 'Medium' },
+        { key: 'LOW', label: 'Low' },
+        { key: 'INFO', label: 'Info' },
+        { key: 'UNKNOWN', label: 'Unknown' }
+    ];
+
+    const presentSeverities = sevOrder.filter(s => stats.severities[s.key].total > 0);
+    const pillBaseStyle = 'padding: 0.25rem 0.7rem; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border-color); transition: all 0.15s ease;';
+    const activePillStyle = `${pillBaseStyle} background: var(--brand-accent, #3b82f6); color: #ffffff; border-color: var(--brand-accent, #3b82f6);`;
+    const inactivePillStyle = `${pillBaseStyle} background: rgba(148, 163, 184, 0.14); color: var(--text-main);`;
+
+    const sevPillsHtml = [
+        `<button type="button" class="filter-pill" data-active="true" style="${activePillStyle}" onclick="setDayFilter('${safeDateId}', 'sev', 'ALL', this)">All</button>`,
+        ...presentSeverities.map(s =>
+            `<button type="button" class="filter-pill" data-active="false" style="${inactivePillStyle}" onclick="setDayFilter('${safeDateId}', 'sev', '${s.key}', this)">${s.label}</button>`
+        )
+    ].join('');
+
+    const vendorPillsHtml = [
+        `<button type="button" class="filter-pill" data-active="true" style="${activePillStyle}" onclick="setDayFilter('${safeDateId}', 'vendor', 'ALL', this)">All</button>`,
+        ...vendorsArr.map(v => {
+            const encoded = encodeURIComponent(v);
+            return `<button type="button" class="filter-pill" data-active="false" style="${inactivePillStyle}" onclick="setDayFilter('${safeDateId}', 'vendor', decodeURIComponent('${encoded}'), this)">${v}</button>`;
+        })
+    ].join('');
+
     const summaryHtml = `
-        <div style="background: rgba(59, 130, 246, 0.1); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-            <h2 style="margin: 0 0 1rem 0; color: var(--text-main); font-size: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
-                🗓️ Last talked about on ${date}
+        <div id="day-summary-${safeDateId}" class="day-summary-box" style="width: 100%; min-width: 0; flex-shrink: 0; background: rgba(59, 130, 246, 0.1); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);"><h2 style="margin-bottom: 10px;">
+                🗓️ Talked about on ${date}
             </h2>
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.25rem;">
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
                 ${renderTotal()}
                 ${renderBadge('CRITICAL', 'CRITICAL')}
                 ${renderBadge('HIGH', 'HIGH')}
@@ -1627,12 +1700,21 @@ async function renderDay(dayData) {
                 ${renderBadge('INFO', 'INFO')}
                 ${renderBadge('UNKNOWN', 'UNKNOWN')}
             </div>
+            <div id="sev-filters-${safeDateId}" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 0.6rem; font-size: 0.875rem;">
+                <strong style="color: var(--text-muted); margin-right: 0.25rem;">Filter by severity:</strong>
+                ${sevPillsHtml}
+            </div>
+            <div id="vendor-filters-${safeDateId}" style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1rem; font-size: 0.875rem;">
+                <strong style="color: var(--text-muted); margin-right: 0.25rem;">Filter by vendor:</strong>
+                ${vendorPillsHtml}
+            </div>
             <div style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5;">
-              <strong>Affected:</strong> <span style="color: var(--text-main);">${vendorsHtml}</span>
           </div>
         </div>
+        <div id="day-cards-${safeDateId}" data-filter-sev="ALL" data-filter-vendor="ALL" style="width: 100%; align-self: stretch; display: flex; flex-direction: column; gap: 1rem;"></div>
     `;
     dashboard.insertAdjacentHTML('beforeend', summaryHtml);
+    const dayCardsContainer = document.getElementById(`day-cards-${safeDateId}`);
 
     const sevRank = { 'CRITICAL': 5, 'HIGH': 4, 'MEDIUM': 3, 'LOW': 2, 'NONE': 1, 'UNKNOWN': 0 };
     processedDetails.sort((a, b) => {
@@ -1643,7 +1725,15 @@ async function renderDay(dayData) {
     });
 
     for (const details of processedDetails) {
-        const safeId = details.id.replace(/[^a-zA-Z0-9]/g, '_');
+        const safeId = `${safeDateId}_${details.id.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+        let cardSev = details.severity || 'UNKNOWN';
+        if (cardSev.includes('N/A') || cardSev === 'NONE') cardSev = 'UNKNOWN';
+        if (!stats.severities[cardSev]) cardSev = 'UNKNOWN';
+
+        const cardVendors = (details.vendors && details.vendors !== "N/A")
+            ? details.vendors.split(',').map(v => v.trim()).filter(Boolean)
+            : [];
 
         const formatNewsDate = (dStr) => dStr || "UNDEFINED";
 
@@ -1707,7 +1797,7 @@ async function renderDay(dayData) {
         const ransomwareHtml = details.knownRansomware ? `<span class="badge-large ransomware-badge" title="Known Ransomware Campaign Use">☣️ Ransomware</span>` : '';
 
         const cardHtml = `
-            <div class="news-card">
+            <div class="news-card" data-severity="${cardSev}" data-vendors='${JSON.stringify(cardVendors).replace(/'/g, "&#39;")}'>
                 <div class="news-header-row">
                     <h2 class="hero-id"><a href="details.html#${details.id}" class="hero-id">${details.id}</a></h2>
                     <span class="badge-large sev-${details.severity}">${details.severity}</span>
@@ -1739,7 +1829,7 @@ async function renderDay(dayData) {
                 </div>
             </div>
         `;
-        dashboard.insertAdjacentHTML('beforeend', cardHtml);
+        dayCardsContainer.insertAdjacentHTML('beforeend', cardHtml);
     }
 }
 
