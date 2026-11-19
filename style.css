@@ -129,6 +129,21 @@ header {
     margin-top: -0.25rem;
 }
 
+#dashboard {
+    width: 100%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 2rem;
+    box-sizing: border-box;
+}
+
+.day-summary-box {
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
 nav.main-nav {
     display: flex;
     align-items: center;
@@ -432,6 +447,10 @@ h1 {
 .btn-link { background: var(--brand-purple); color: white; }
 .toolbar button:hover { filter: brightness(1.2); transform: translateY(-1px); }
 
+button.filter-pill {
+    font-family: inherit;
+}
+
 .btn-action { 
     font-size: 10px; 
     padding: 5px 8px; 
@@ -449,7 +468,7 @@ h1 {
 .btn-nvd { background: #475569; color: white; }
 .btn-cve { background: #312e81; color: #c7d2fe; }
 .btn-kev-link { background: #7f1d1d; color: #fecaca; }
-.btn-action:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+.btn-action:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
 
 .no-break { word-break: normal; overflow-wrap: normal; hyphens: none; }
 
@@ -488,6 +507,7 @@ tr:hover { background-color: var(--brand-card); }
 .sev-HIGH { background: var(--brand-high); color: #FFF; }
 .sev-MEDIUM { background: var(--brand-medium); color: #FFF; }
 .sev-LOW { background: var(--brand-low); }
+.sev-INFO { background: #60a5fa; color: #FFF; }
 .sev-N\/A, .sev-UNKNOWN, .sev-UNDEFINED { background: var(--brand-none); }
 
 .ssvc-T { background: var(--brand-low);}
