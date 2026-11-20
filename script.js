@@ -123,8 +123,8 @@ function renderHeader() {
                 <a href="index.html" class="brand-logo">
                     <img src="vinthub.svg" alt="Vulnerability Intelligence Hub">
                     <div class="brand-title-group">
-                        <span class="brand-title">VULNERABILITY</span>
-                        <span class="brand-subtitle">Intelligence Hub</span>
+                        <span class="brand-title">VINTHUB</span>
+                        <span class="brand-subtitle">Vulnerability Intelligence Hub</span>
                     </div>
                 </a>
                 <nav class="main-nav">
