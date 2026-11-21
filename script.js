@@ -101,9 +101,9 @@ function renderHeader() {
 
     const navLinks = [
         { name: 'Home', href: 'index.html', key: 'home' },
-        { name: 'Search', href: 'search.html', key: 'search', onclick: "scrollToSearch()" },
-        { name: 'News', href: 'news.html', key: 'news', onclick: "scrollToSection('sightings-section')" },
-        { name: 'API', href: 'api.html', key: 'api', onclick: "scrollToSection('api-section')" },
+        { name: 'Search', href: 'search.html', key: 'search' },
+        { name: 'News', href: 'news.html', key: 'news' },
+        { name: 'API', href: 'api.html', key: 'api' },
         { name: 'About', href: 'about.html', key: 'about' }
     ];
 
