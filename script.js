@@ -379,16 +379,10 @@ async function startAnalysis() {
 
         let ssvcVec = "N/A";
         const ssvcFactors = data.ssvc?.factors;
-        if (ssvcFactors) {
-            const eVal = ssvcMap.Exploitation.values[(ssvcFactors.Exploitation || "").toLowerCase()] || "N";
-            const aVal = ssvcMap.Automatable.values[(ssvcFactors.Automatable || "").toLowerCase()] || "N";
-            const tVal = (ssvcFactors["Technical Impact"] || "").toLowerCase() === "total" ? "T" : "P";
-            ssvcVec = `SSVCv2/E:${eVal}/A:${aVal}/T:${tVal}`;
-        } else if (data.bod_sla?.factors) {
-            const f = data.bod_sla.factors;
-            const eVal = f.in_cisa_kev === "Yes" ? "A" : (pocs.length > 0 ? "P" : "N");
-            const aVal = f.automatable === "Yes" ? "Y" : "N";
-            const tVal = f.technical_impact === "Total" ? "T" : "P";
+        if (ssvcFactors && ssvcFactors.Exploitation && ssvcFactors.Automatable && ssvcFactors["Technical Impact"]) {
+            const eVal = ssvcMap.Exploitation.values[String(ssvcFactors.Exploitation).toLowerCase()] || "N";
+            const aVal = ssvcMap.Automatable.values[String(ssvcFactors.Automatable).toLowerCase()] || "N";
+            const tVal = String(ssvcFactors["Technical Impact"]).toLowerCase() === "total" ? "T" : "P";
             ssvcVec = `SSVCv2/E:${eVal}/A:${aVal}/T:${tVal}`;
         }
         const decision = getSSVCDecision(ssvcVec);
@@ -413,15 +407,19 @@ function renderTable() {
 
     const getBOD2604SLA = (ssvcVec, isKev) => {
         if (!ssvcVec || ssvcVec === "N/A") {
-            return { ext: "N/A", int: "N/A", extColor: "#94a3b8", extBg: "#1e293b", intColor: "#94a3b8", intBg: "#1e293b" };
+            return { ext: "N/A", int: "N/A" };
         }
 
         const parts = ssvcVec.split('/');
         const aPart = parts.find(p => p.startsWith('A:'));
         const tPart = parts.find(p => p.startsWith('T:'));
-        
-        const isA = aPart ? aPart.split(':')[1] === 'Y' : false;
-        const isT = tPart ? tPart.split(':')[1] === 'T' : false;
+
+        if (!aPart || !tPart) {
+            return { ext: "N/A", int: "N/A" };
+        }
+
+        const isA = aPart.split(':')[1] === 'Y';
+        const isT = tPart.split(':')[1] === 'T';
         const isK = isKev;
 
         const getSla = (isPublic, isK, isA, isT) => {
@@ -437,10 +435,7 @@ function renderTable() {
             }
         };
 
-        const extSla = getSla(true, isK, isA, isT);
-        const intSla = getSla(false, isK, isA, isT);
-
-        return { ext: extSla, int: intSla };
+        return { ext: getSla(true, isK, isA, isT), int: getSla(false, isK, isA, isT) };
     };
 
     displayData.sort((a, b) => {
@@ -1083,7 +1078,7 @@ async function startDetailsAnalysis() {
 
     // Use vector parser to populate metrics breakdown
     const metricsHtml = parseCvssMetrics(vector);
-    document.getElementById('displayMetrics').innerHTML = metricsHtml.length > 0 ? metricsHtml.join('') : '<div class="metric-item">No extra metrics available</div>';
+    document.getElementById('displayMetrics').innerHTML = metricsHtml.length > 0 ? metricsHtml.join('') : '<div class="metric-item">N/A</div>';
 
     let weaknessHtml = [];
     (data.cwe || []).forEach(c => {
@@ -1149,10 +1144,10 @@ async function startDetailsAnalysis() {
     let ssvcVec = "N/A";
     let ssvcMeta = [];
     const ssvcFactors = data.ssvc?.factors;
-    if (ssvcFactors) {
-        let exploitation = ssvcFactors.Exploitation || "N";
-        let automatable = ssvcFactors.Automatable || "N";
-        let techImpact = ssvcFactors["Technical Impact"] || "Partial";
+    if (ssvcFactors && ssvcFactors.Exploitation && ssvcFactors.Automatable && ssvcFactors["Technical Impact"]) {
+        let exploitation = ssvcFactors.Exploitation;
+        let automatable = ssvcFactors.Automatable;
+        let techImpact = ssvcFactors["Technical Impact"];
 
         if (isKev && exploitation.toLowerCase() !== "active") exploitation = "Active";
 
@@ -1168,6 +1163,10 @@ async function startDetailsAnalysis() {
         const aChar = ssvcMap.Automatable.values[automatable.toLowerCase()] || "N";
         const tChar = techImpact.toLowerCase() === "total" ? "T" : "P";
         ssvcVec = `SSVCv2/E:${eChar}/A:${aChar}/T:${tChar}`;
+    } else if (ssvcFactors) {
+        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Exploitation</div><div class="metric-val">${ssvcFactors.Exploitation ? (ssvcDisplayMap.Exploitation[ssvcFactors.Exploitation] || capitalize(ssvcFactors.Exploitation)) : "N/A"}</div></div>`);
+        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">${ssvcFactors.Automatable ? (ssvcDisplayMap.Automatable[ssvcFactors.Automatable] || capitalize(ssvcFactors.Automatable)) : "N/A"}</div></div>`);
+        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">${ssvcFactors["Technical Impact"] ? (ssvcDisplayMap["Technical Impact"][ssvcFactors["Technical Impact"]] || capitalize(ssvcFactors["Technical Impact"])) : "N/A"}</div></div>`);
     }
 
     const dec = getSSVCDecision(ssvcVec);
@@ -1198,13 +1197,17 @@ async function startDetailsAnalysis() {
         document.getElementById('ssvcExpansion').innerHTML = ssvcMeta.join('');
     }
 
-    const bod = data.bod_sla || {};
-    document.getElementById('bodSlaPublic').innerText = bod.public || "N/A";
-    document.getElementById('bodSlaInternal').innerText = bod.internal || "N/A";
-    document.getElementById('bodExpansion').innerHTML = `
-        <div class="metric-item"><div class="metric-label">In KEV</div><div class="metric-val">${isKev ? "Yes" : "No"}</div></div>
-        <div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">${bod.factors?.automatable || "No"}</div></div>
-        <div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">${bod.factors?.technical_impact || "Partial"}</div></div>
+    const bod = data.bod_sla;
+    document.getElementById('bodSlaPublic').innerText = bod?.public || "N/A";
+    document.getElementById('bodSlaInternal').innerText = bod?.internal || "N/A";
+    document.getElementById('bodExpansion').innerHTML = bod?.factors ? `
+        <div class="metric-item"><div class="metric-label">In KEV</div><div class="metric-val">${bod.factors.in_cisa_kev || (isKev ? "Yes" : "No")}</div></div>
+        <div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">${bod.factors.automatable || "N/A"}</div></div>
+        <div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">${bod.factors.technical_impact || "N/A"}</div></div>
+    ` : `
+        <div class="metric-item"><div class="metric-label">In KEV</div><div class="metric-val">N/A</div></div>
+        <div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">N/A</div></div>
+        <div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">N/A</div></div>
     `;
 
     document.getElementById('displayId').innerText = input;
