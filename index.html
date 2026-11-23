@@ -133,7 +133,7 @@
                     </div>
 
                     <h2 class="section-title">
-                        From CVE ID to Working Exploit in One Search
+                        From CVE ID to exploit code in one search
                     </h2>
 
                     <p class="section-desc">
@@ -175,20 +175,24 @@
         <!-- REST API SECTION -->
         <section id="api-section" class="api-section">
             <div class="api-flex">
-                
+
                 <!-- Left Details -->
                 <div class="api-left">
                     <div class="pill-badge pill-emerald">
                         ⚡ FOR DEFENDERS AND RED TEAMERS
                     </div>
-                    
+
                     <h2 class="section-title">
                         Power Your Workflows with Programmatic Threat Intelligence
                     </h2>
 
                     <p class="section-desc">
-                        Fetch consolidated vulnerability intelligence, EPSS, KEV, SSVC and public PoCs directly into your custom tools, SOAR platforms, or scanner scripts.
+                        Fetch consolidated vulnerability intelligence, EPSS, KEV, SSVC, BOD SLAs and public PoCs directly into your custom tools, SOAR platforms, or scanner scripts.
                     </p>
+
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; background: #0f172a; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid var(--brand-border); display: inline-block; color: #38bdf8; margin-bottom: 1rem; max-width: 100%; overflow-x: auto;">
+                        GET https://cve.vinthub.io/{year}/{cve_id}
+                    </div>
 
                     <ul>
                         <li>
@@ -200,11 +204,15 @@
                             <span>Query daily news programmatically.</span>
                         </li>
                     </ul>
+
+                    <p style="margin-top: 1.5rem;">
+                        <a href="api.html" style="color: #38bdf8; font-weight: 600; text-decoration: none;">Read the full API reference</a>
+                    </p>
                 </div>
 
                 <!-- Right Code Snippet Box -->
                 <div class="api-right">
-                    
+
                     <!-- Code Snippet Header / Tabs -->
                     <div class="code-header">
                         <div class="code-tabs">
@@ -213,7 +221,7 @@
                         </div>
 
                         <button onclick="copyCodeSnippet()" class="copy-btn">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                             <span id="copy-code-text">Copy</span>
                         </button>
                     </div>
@@ -221,33 +229,36 @@
                     <!-- Code Snippet Blocks -->
                     <div class="code-body">
                         <!-- cURL Snippet -->
-                        <pre id="code-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://api.vinthub.io/cve/2026/CVE-2026-63030.json&quot;</span> \
-  -H <span class="c-amber">&quot;Accept: application/json&quot;</span></code></pre>
+                        <pre id="code-curl"><code><span class="c-purple">curl</span> <span class="c-emerald">&quot;https://cve.vinthub.io/2026/CVE-2026-123890&quot;</span></code></pre>
 
                         <!-- Python Snippet -->
                         <pre id="code-python" class="hidden"><code><span class="c-purple">import</span> requests
 
-cve_id = <span class="c-emerald">&quot;CVE-2026-63030&quot;</span>
-url = <span class="c-emerald">f&quot;https://api.vinthub.io/cve/{cve_id.split('-')[1]}/{cve_id}.json&quot;</span>
+cve_id = <span class="c-emerald">&quot;CVE-2026-123890&quot;</span>
+year = cve_id.split(<span class="c-emerald">&quot;-&quot;</span>)[<span class="c-purple">1</span>]
 
-response = requests.get(url)
-data = response.json()
+data = requests.get(<span class="c-emerald">f&quot;https://cve.vinthub.io/{year}/{cve_id}&quot;</span>).json()
 
-print(<span class="c-emerald">f&quot;SSVC Decision: {data['ssvc']['decision']}&quot;</span>)
-print(<span class="c-emerald">f&quot;EPSS Probability: {data['epss']['score']}&quot;</span>)
-print(<span class="c-emerald">f&quot;PoCs Found: {len(data['pocs'])}&quot;</span>)</code></pre>
+print(data[<span class="c-emerald">&quot;title&quot;</span>])
+print(<span class="c-emerald">&quot;EPSS:&quot;</span>, data[<span class="c-emerald">&quot;epss&quot;</span>][<span class="c-emerald">&quot;score&quot;</span>])
+print(<span class="c-emerald">&quot;In CISA KEV:&quot;</span>, data[<span class="c-emerald">&quot;cisa_kev&quot;</span>][<span class="c-emerald">&quot;in_cisa_kev&quot;</span>])
+print(<span class="c-emerald">&quot;BOD SLA:&quot;</span>, data[<span class="c-emerald">&quot;bod_sla&quot;</span>][<span class="c-emerald">&quot;public&quot;</span>])
+print(<span class="c-emerald">&quot;PoCs found:&quot;</span>, len(data[<span class="c-emerald">&quot;pocs&quot;</span>]))</code></pre>
                     </div>
 
                     <!-- JSON Sample Response Box -->
                     <div class="json-sample">
-                        <div class="json-sample-title">SAMPLE JSON RESPONSE OBJECT:</div>
+                        <div class="json-sample-title">SAMPLE JSON RESPONSE (TRIMMED):</div>
                         <div class="json-sample-content custom-scrollbar"><code><span class="c-blue">{</span>
-  <span class="c-emerald">&quot;id&quot;</span>: <span class="c-amber">&quot;CVE-2026-63030&quot;</span>,
-  <span class="c-emerald">&quot;cvss_score&quot;</span>: <span class="c-purple">9.8</span>,
-  <span class="c-emerald">&quot;cisa_kev&quot;</span>: <span class="c-purple">true</span>,
-  <span class="c-emerald">&quot;epss_score&quot;</span>: <span class="c-purple">0.97271</span>,
-  <span class="c-emerald">&quot;ssvc_decision&quot;</span>: <span class="c-amber">&quot;ACT&quot;</span>,
-  <span class="c-emerald">&quot;pocs_count&quot;</span>: <span class="c-purple">77</span>
+  <span class="c-emerald">&quot;cve_id&quot;</span>: <span class="c-amber">&quot;CVE-2026-123890&quot;</span>,
+  <span class="c-emerald">&quot;title&quot;</span>: <span class="c-amber">&quot;vCenter authentication-bypass vulnerability&quot;</span>,
+  <span class="c-emerald">&quot;cvss&quot;</span>: [{ <span class="c-emerald">&quot;version&quot;</span>: <span class="c-amber">&quot;3.1&quot;</span>, <span class="c-emerald">&quot;baseScore&quot;</span>: <span class="c-purple">9.8</span> }],
+  <span class="c-emerald">&quot;epss&quot;</span>: { <span class="c-emerald">&quot;score&quot;</span>: <span class="c-purple">0.03526</span>, <span class="c-emerald">&quot;percentile&quot;</span>: <span class="c-purple">0.8953</span> },
+  <span class="c-emerald">&quot;ssvc&quot;</span>: { <span class="c-emerald">&quot;decisions&quot;</span>: { <span class="c-emerald">&quot;Mission &amp; Well-being - High&quot;</span>: <span class="c-amber">&quot;Act&quot;</span> } },
+  <span class="c-emerald">&quot;bod_sla&quot;</span>: { <span class="c-emerald">&quot;public&quot;</span>: <span class="c-amber">&quot;3 Days + Forensic Triage&quot;</span> },
+  <span class="c-emerald">&quot;cisa_kev&quot;</span>: { <span class="c-emerald">&quot;in_cisa_kev&quot;</span>: <span class="c-purple">true</span>, <span class="c-emerald">&quot;added_date&quot;</span>: <span class="c-amber">&quot;2026-11-20&quot;</span> },
+  <span class="c-emerald">&quot;pocs&quot;</span>: [<span class="c-amber">&quot;https://github.com/dinosn/CVE-2026-123890&quot;</span>, <span class="c-blue">...</span>],
+  <span class="c-blue">...</span>
 <span class="c-blue">}</span></code></div>
                     </div>
 
