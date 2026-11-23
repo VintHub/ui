@@ -149,7 +149,7 @@ function renderFooter() {
                 <span class="footer-brand">Vinthub © ${currentYear}</span>
                 <nav class="footer-nav">
                     <a href="about.html">About & FAQ</a>
-                    <a href="https://www.linkedin.com/company/vinthub/" target="_blank" rel="noopener">Follow on LinkedIn</a>
+                    <a href="https://www.linkedin.com/company/vinthub/" target="_blank" rel="noopener">LinkedIn</a>
             
                 </nav>
             </div>
