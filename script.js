@@ -32,7 +32,7 @@ async function fetchUnifiedCveData(cveId) {
     const parts = cveId.split('-');
     const year = parts[1];
     try {
-        const res = await fetch(`https://cve.vinthub.io/${year}/${cveId}.json`);
+        const res = await fetch(`https://cve.vinthub.io/${year}/${cveId}`);
         if (!res.ok) return null;
         return await res.json();
     } catch (e) {
@@ -1297,11 +1297,11 @@ async function startDetailsAnalysis() {
     let articles = data.news || [];
     const parts = input.split('-');
     const year = parts[1];
-    document.getElementById('linkContainer').innerHTML = `<a href="https://cve.vinthub.io/${year}/${input}.json" class="btn-action" style="background:#0f766e" target="_blank">JSON API ↗</a><a href="https://nvd.nist.gov/vuln/detail/${input}" class="btn-action" style="background:#475569" target="_blank">NVD ↗</a><a href="https://www.cve.org/CVERecord?id=${input}" class="btn-action" style="background:#312e81" target="_blank">CVE.org ↗</a>${kevMarkup}`;
+    document.getElementById('linkContainer').innerHTML = `<a href="https://cve.vinthub.io/${year}/${input}" class="btn-action" style="background:#0f766e" target="_blank">JSON API ↗</a><a href="https://nvd.nist.gov/vuln/detail/${input}" class="btn-action" style="background:#475569" target="_blank">NVD ↗</a><a href="https://www.cve.org/CVERecord?id=${input}" class="btn-action" style="background:#312e81" target="_blank">CVE.org ↗</a>${kevMarkup}`;
 
     if (year) {
         try {
-            const newsRes = await fetch(`https://news.vinthub.io/cves/${year}/${input}.json`);
+            const newsRes = await fetch(`https://news.vinthub.io/cves/${year}/${input}`);
             if (newsRes.ok) {
                 const additionalNews = await newsRes.json();
                 if (Array.isArray(additionalNews)) {
@@ -1581,7 +1581,7 @@ async function fetchNextAvailableDay() {
         let d = String(currentDate.getUTCDate()).padStart(2, '0');
         let dateStr = `${y}-${m}-${d}`;
         
-        let url = `https://news.vinthub.io/${y}/${m}/${dateStr}.json?${Math.random().toString(36).substring(2, 10)}`;
+        let url = `https://news.vinthub.io/${y}/${m}/${dateStr}?${Math.random().toString(36).substring(2, 10)}`;
         await updateStatus(`Checking news for ${dateStr}...`, 'status-text');
 
         try {
