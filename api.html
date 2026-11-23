@@ -75,7 +75,7 @@
                                 <td style="font-family: inherit; white-space: normal;">Full intelligence record for one CVE: scores, SSVC, BOD SLA, KEV status, PoCs, references and news.</td>
                             </tr>
                             <tr>
-                                <td class="overview-links"><a href="#news-endpoint">GET news.vinthub.io/{year}/{month}/{date}.json</a></td>
+                                <td class="overview-links"><a href="#news-endpoint">GET news.vinthub.io/{year}/{month}/{date}</a></td>
                                 <td style="font-family: inherit; white-space: normal;">All CVEs that appeared in the news on a given day, with the articles that mention them.</td>
                             </tr>
                         </tbody>
@@ -290,7 +290,7 @@ print(<span class="c-emerald">&quot;PoCs found:&quot;</span>, len(data[<span cla
 
                     <!-- Left Details -->
                     <div class="api-left">
-                        <div class="endpoint-pill">GET https://news.vinthub.io/{year}/{month}/{date}.json</div>
+                        <div class="endpoint-pill">GET https://news.vinthub.io/{year}/{month}/{date}</div>
 
                         <p class="section-desc">
                             Returns every CVE that was covered in the news on the given day, together with the articles that mention it.
@@ -303,7 +303,7 @@ print(<span class="c-emerald">&quot;PoCs found:&quot;</span>, len(data[<span cla
                                 <tbody>
                                     <tr><td>year</td><td>string</td><td>Four-digit year, e.g. <code>2026</code>.</td></tr>
                                     <tr><td>month</td><td>string</td><td>Two-digit month with a leading zero, e.g. <code>10</code> or <code>03</code>.</td></tr>
-                                    <tr><td>date</td><td>string</td><td>Full date as <code>YYYY-MM-DD</code>, e.g. <code>2026-10-08</code>, followed by <code>.json</code>.</td></tr>
+                                    <tr><td>date</td><td>string</td><td>Full date as <code>YYYY-MM-DD</code>, e.g. <code>2026-10-08</code>.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -340,7 +340,7 @@ print(<span class="c-emerald">&quot;PoCs found:&quot;</span>, len(data[<span cla
                         </div>
 
                         <div class="code-body">
-                            <pre id="code-news-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://news.vinthub.io/2026/10/2026-10-08.json&quot;</span> \
+                            <pre id="code-news-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://news.vinthub.io/2026/10/2026-10-08&quot;</span> \
   -H <span class="c-amber">&quot;Accept: application/json&quot;</span></code></pre>
 
                             <pre id="code-news-python" class="hidden"><code><span class="c-purple">import</span> requests
@@ -348,7 +348,7 @@ print(<span class="c-emerald">&quot;PoCs found:&quot;</span>, len(data[<span cla
 date_str = <span class="c-emerald">&quot;2026-10-08&quot;</span>
 year, month, _ = date_str.split(<span class="c-emerald">&quot;-&quot;</span>)
 
-response = requests.get(<span class="c-emerald">f&quot;https://news.vinthub.io/{year}/{month}/{date_str}.json&quot;</span>, timeout=<span class="c-purple">10</span>)
+response = requests.get(<span class="c-emerald">f&quot;https://news.vinthub.io/{year}/{month}/{date_str}&quot;</span>, timeout=<span class="c-purple">10</span>)
 response.raise_for_status()
 
 <span class="c-purple">for</span> cve_id, articles <span class="c-purple">in</span> response.json().items():
