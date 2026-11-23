@@ -4,14 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>REST API Reference - VintHub</title>
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <!-- External Stylesheet -->
     <link rel="stylesheet" href="style.css">
+
+    <!-- API reference extras (tables, endpoint pill, anchors) -->
+    <style>
+        html { scroll-behavior: smooth; }
+        .endpoint-pill {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; background: #0f172a;
+            padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid var(--brand-border, #334155);
+            display: inline-block; color: #38bdf8; margin-bottom: 1rem; max-width: 100%; overflow-x: auto;
+        }
+        .doc-h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 600; color: #f1f5f9; margin: 2.5rem 0 0.75rem; }
+        .doc-note { color: #94a3b8; font-size: 0.9rem; line-height: 1.6; margin: 0 0 1rem; }
+        .doc-table-wrap { overflow-x: auto; border: 1px solid var(--brand-border, #334155); border-radius: 0.5rem; }
+        .doc-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 640px; }
+        .doc-table th, .doc-table td { text-align: left; vertical-align: top; padding: 0.65rem 0.9rem; border-bottom: 1px solid rgba(51, 65, 85, 0.6); }
+        .doc-table th { color: #94a3b8; font-weight: 600; background: rgba(15, 23, 42, 0.7); white-space: nowrap; }
+        .doc-table tr:last-child td { border-bottom: none; }
+        .doc-table td { color: #cbd5e1; line-height: 1.55; }
+        .doc-table td:first-child, .doc-table td:nth-child(2) { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; white-space: nowrap; }
+        .doc-table td:first-child { color: #38bdf8; }
+        .doc-table td:nth-child(2) { color: #a78bfa; }
+        .doc-table code, .doc-note code { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #fbbf24; }
+        .overview-links a { color: #38bdf8; text-decoration: none; font-weight: 600; }
+        .overview-links a:hover { text-decoration: underline; }
+    </style>
 </head>
 <body class="custom-scrollbar" data-page="api">
 
@@ -24,181 +48,360 @@
             <div class="hero-glow"></div>
 
             <div class="hero-content">
-                
                 <h1>
                     VintHub <span class="gradient-text">REST API Reference</span>
                 </h1>
+                <p class="hero-subtitle">
+                    Two read-only JSON endpoints: consolidated intelligence for a single CVE, and the CVE news feed for a single day.
+                </p>
             </div>
         </section>
 
-        <!-- API SECTION 1: CVE SEARCH API -->
+        <!-- OVERVIEW -->
         <section class="api-section" style="padding-top: 0;">
             <div class="section-container">
-                
+                <div class="section-header-center" style="text-align: left; margin-bottom: 1.5rem; max-width: 100%;">
+                    <h2 class="section-title" style="margin-top: 0.5rem;">Overview</h2>
+                </div>
+
+                <div class="doc-table-wrap">
+                    <table class="doc-table" style="min-width: 560px;">
+                        <thead>
+                            <tr><th>Endpoint</th><th>Purpose</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="overview-links"><a href="#cve-endpoint">GET cve.vinthub.io/{year}/{cve_id}</a></td>
+                                <td style="font-family: inherit; white-space: normal;">Full intelligence record for one CVE: scores, SSVC, BOD SLA, KEV status, PoCs, references and news.</td>
+                            </tr>
+                            <tr>
+                                <td class="overview-links"><a href="#news-endpoint">GET news.vinthub.io/{year}/{month}/{date}.json</a></td>
+                                <td style="font-family: inherit; white-space: normal;">All CVEs that appeared in the news on a given day, with the articles that mention them.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="doc-note" style="margin-top: 1rem;">
+                    Both endpoints are plain <code>GET</code> requests that return <code>application/json; charset=utf-8</code>.
+                </p>
+            </div>
+        </section>
+
+        <!-- API SECTION 1: CVE INTELLIGENCE API -->
+        <section id="cve-endpoint" class="api-section" style="padding-top: 0; border-top: 1px solid rgba(51, 65, 85, 0.4);">
+            <div class="section-container" style="padding-top: 4rem;">
+
                 <div class="section-header-center" style="text-align: left; margin-bottom: 2rem; max-width: 100%;">
                     <h2 class="section-title" style="margin-top: 0.5rem;">CVE Intelligence Lookup API</h2>
                 </div>
 
                 <div class="api-flex">
-                    
+
                     <!-- Left Details -->
                     <div class="api-left">
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; background: #0f172a; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid var(--brand-border); display: inline-block; color: #38bdf8; margin-bottom: 1rem;">
-                            GET https://cve.vinthub.io/{year}/{cve_id}.json
-                        </div>
-                        
+                        <div class="endpoint-pill">GET https://cve.vinthub.io/{year}/{cve_id}</div>
+
                         <p class="section-desc">
+                            Returns one consolidated JSON record for a CVE: CVE.org and NVD metadata, CVSS, EPSS, CWE, SSVC decisions, BOD SLA, CISA KEV status, public PoCs, references and recent news.
                         </p>
 
-                        <ul>
+                        <div class="doc-h3" style="margin-top: 1.5rem;">Path parameters</div>
+                        <div class="doc-table-wrap">
+                            <table class="doc-table" style="min-width: 420px;">
+                                <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr><td>year</td><td>string</td><td>Four-digit year from the CVE ID, e.g. <code>2026</code>.</td></tr>
+                                    <tr><td>cve_id</td><td>string</td><td>Full CVE ID in upper case, e.g. <code>CVE-2026-123890</code>. The year in the path must match the year in the ID.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <ul style="margin-top: 1.5rem;">
                             <li>
                                 <span class="check-circle">✓</span>
-                                <span><strong>Input:</strong> year (YYYY), CVE ID</span>
+                                <span><strong>Input:</strong> year (YYYY) and CVE ID</span>
                             </li>
                             <li>
                                 <span class="check-circle">✓</span>
-                                <span><strong>Output:</strong> Consolidated vulnerability intelligence for the specified CVE ID</span>
+                                <span><strong>Output:</strong> one JSON object with everything known about the CVE</span>
                             </li>
                         </ul>
                     </div>
 
                     <!-- Right Code Snippet Box -->
                     <div class="api-right">
-                        
-                        <!-- Code Header / Tabs -->
+
                         <div class="code-header">
                             <div class="code-tabs">
-                                <button onclick="switchApiTab('cve-curl')" id="tab-cve-curl" class="tab-btn active">cURL</button>
-                                <button onclick="switchApiTab('cve-python')" id="tab-cve-python" class="tab-btn">Python</button>
+                                <button onclick="docTab('cve','curl')" id="tab-cve-curl" class="tab-btn active">cURL</button>
+                                <button onclick="docTab('cve','python')" id="tab-cve-python" class="tab-btn">Python</button>
                             </div>
 
-                            <button onclick="copySnippet('code-cve-curl', 'code-cve-python', 'copy-cve-text')" class="copy-btn">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <button onclick="docCopy('cve')" class="copy-btn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                 <span id="copy-cve-text">Copy</span>
                             </button>
                         </div>
 
-                        <!-- Code Snippet Blocks -->
                         <div class="code-body">
-                            <pre id="code-cve-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://cve.vinthub.io/2026/CVE-2026-63030.json&quot;</span> \
+                            <pre id="code-cve-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://cve.vinthub.io/2026/CVE-2026-123890&quot;</span> \
   -H <span class="c-amber">&quot;Accept: application/json&quot;</span></code></pre>
 
                             <pre id="code-cve-python" class="hidden"><code><span class="c-purple">import</span> requests
 
-cve_id = <span class="c-emerald">&quot;CVE-2026-63030&quot;</span>
-url = <span class="c-emerald">f&quot;https://cve.vinthub.io/{cve_id.split('-')[1]}/{cve_id}.json&quot;</span>
+cve_id = <span class="c-emerald">&quot;CVE-2026-123890&quot;</span>
+year = cve_id.split(<span class="c-emerald">&quot;-&quot;</span>)[<span class="c-purple">1</span>]
 
-response = requests.get(url)
+response = requests.get(<span class="c-emerald">f&quot;https://cve.vinthub.io/{year}/{cve_id}&quot;</span>, timeout=<span class="c-purple">10</span>)
+response.raise_for_status()
 data = response.json()
 
-print(<span class="c-emerald">f&quot;SSVC Decision: {data['ssvc']['decision']}&quot;</span>)
-print(<span class="c-emerald">f&quot;EPSS Probability: {data['epss']['score']}&quot;</span>)
-print(<span class="c-emerald">f&quot;PoCs Found: {len(data['pocs'])}&quot;</span>)</code></pre>
+print(data[<span class="c-emerald">&quot;title&quot;</span>])
+print(<span class="c-emerald">&quot;CVSS:&quot;</span>, data[<span class="c-emerald">&quot;cvss&quot;</span>][<span class="c-purple">0</span>][<span class="c-emerald">&quot;baseScore&quot;</span>])
+print(<span class="c-emerald">&quot;EPSS:&quot;</span>, data[<span class="c-emerald">&quot;epss&quot;</span>][<span class="c-emerald">&quot;score&quot;</span>])
+print(<span class="c-emerald">&quot;SSVC (High):&quot;</span>, data[<span class="c-emerald">&quot;ssvc&quot;</span>][<span class="c-emerald">&quot;decisions&quot;</span>][<span class="c-emerald">&quot;Mission &amp; Well-being - High&quot;</span>])
+print(<span class="c-emerald">&quot;In CISA KEV:&quot;</span>, data[<span class="c-emerald">&quot;cisa_kev&quot;</span>][<span class="c-emerald">&quot;in_cisa_kev&quot;</span>])
+print(<span class="c-emerald">&quot;BOD SLA:&quot;</span>, data[<span class="c-emerald">&quot;bod_sla&quot;</span>][<span class="c-emerald">&quot;public&quot;</span>])
+print(<span class="c-emerald">&quot;PoCs found:&quot;</span>, len(data[<span class="c-emerald">&quot;pocs&quot;</span>]))</code></pre>
                         </div>
 
-                        <!-- JSON Sample Response Box -->
                         <div class="json-sample">
-                            <div class="json-sample-title">SAMPLE JSON RESPONSE OBJECT:</div>
+                            <div class="json-sample-title">SAMPLE JSON RESPONSE (LONG ARRAYS TRIMMED):</div>
                             <div class="json-sample-content custom-scrollbar"><code><span class="c-blue">{</span>
-  <span class="c-emerald">&quot;id&quot;</span>: <span class="c-amber">&quot;CVE-2026-63030&quot;</span>,
-  <span class="c-emerald">&quot;cvss_score&quot;</span>: <span class="c-purple">9.8</span>,
-  <span class="c-emerald">&quot;cisa_kev&quot;</span>: <span class="c-purple">true</span>,
-  <span class="c-emerald">&quot;epss_score&quot;</span>: <span class="c-purple">0.97271</span>,
-  <span class="c-emerald">&quot;ssvc_decision&quot;</span>: <span class="c-amber">&quot;ACT&quot;</span>,
-  <span class="c-emerald">&quot;pocs_count&quot;</span>: <span class="c-purple">77</span>
+  <span class="c-emerald">&quot;cve_id&quot;</span>: <span class="c-amber">&quot;CVE-2026-123890&quot;</span>,
+  <span class="c-emerald">&quot;status&quot;</span>: <span class="c-amber">&quot;PUBLISHED&quot;</span>,
+  <span class="c-emerald">&quot;published_date&quot;</span>: { <span class="c-emerald">&quot;nvd&quot;</span>: <span class="c-amber">&quot;2026-11-19&quot;</span>, <span class="c-emerald">&quot;cveorg&quot;</span>: <span class="c-amber">&quot;2026-11-19&quot;</span> },
+  <span class="c-emerald">&quot;title&quot;</span>: <span class="c-amber">&quot;vCenter authentication-bypass vulnerability&quot;</span>,
+  <span class="c-emerald">&quot;description&quot;</span>: <span class="c-amber">&quot;VMware vCenter contains an authentication bypass ...&quot;</span>,
+  <span class="c-emerald">&quot;products&quot;</span>: <span class="c-amber">&quot;VMware Telco Cloud Infrastructure, VMware Telco Cloud Platform, VMware VCenter&quot;</span>,
+  <span class="c-emerald">&quot;affected&quot;</span>: {
+    <span class="c-emerald">&quot;cna_affected&quot;</span>: [
+      {
+        <span class="c-emerald">&quot;vendor&quot;</span>: <span class="c-amber">&quot;VMware&quot;</span>,
+        <span class="c-emerald">&quot;product&quot;</span>: <span class="c-amber">&quot;VMware vCenter&quot;</span>,
+        <span class="c-emerald">&quot;versions&quot;</span>: [
+          { <span class="c-emerald">&quot;status&quot;</span>: <span class="c-amber">&quot;affected&quot;</span>, <span class="c-emerald">&quot;version&quot;</span>: <span class="c-amber">&quot;9.1.x&quot;</span>, <span class="c-emerald">&quot;lessThan&quot;</span>: <span class="c-amber">&quot;9.1.1.0200&quot;</span>, <span class="c-emerald">&quot;versionType&quot;</span>: <span class="c-amber">&quot;custom&quot;</span> }
+        ],
+        <span class="c-emerald">&quot;defaultStatus&quot;</span>: <span class="c-amber">&quot;unaffected&quot;</span>
+      }
+    ],
+    <span class="c-emerald">&quot;nvd_cpes&quot;</span>: [
+      { <span class="c-emerald">&quot;nodes&quot;</span>: [{ <span class="c-emerald">&quot;operator&quot;</span>: <span class="c-amber">&quot;OR&quot;</span>, <span class="c-emerald">&quot;negate&quot;</span>: <span class="c-purple">false</span>, <span class="c-emerald">&quot;cpeMatch&quot;</span>: [ <span class="c-blue">...</span> ] }] }
+    ]
+  },
+  <span class="c-emerald">&quot;cvss&quot;</span>: [
+    {
+      <span class="c-emerald">&quot;version&quot;</span>: <span class="c-amber">&quot;3.1&quot;</span>,
+      <span class="c-emerald">&quot;vectorString&quot;</span>: <span class="c-amber">&quot;CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H&quot;</span>,
+      <span class="c-emerald">&quot;baseScore&quot;</span>: <span class="c-purple">9.8</span>,
+      <span class="c-emerald">&quot;source&quot;</span>: <span class="c-amber">&quot;NVD (security@vmware.com)&quot;</span>
+    }
+  ],
+  <span class="c-emerald">&quot;epss&quot;</span>: { <span class="c-emerald">&quot;score&quot;</span>: <span class="c-purple">0.03526</span>, <span class="c-emerald">&quot;percentile&quot;</span>: <span class="c-purple">0.8953</span> },
+  <span class="c-emerald">&quot;cwe&quot;</span>: [{ <span class="c-emerald">&quot;id&quot;</span>: <span class="c-amber">&quot;CWE-288&quot;</span>, <span class="c-emerald">&quot;description&quot;</span>: <span class="c-amber">&quot;Authentication Bypass Using an Alternate Path or Channel&quot;</span> }],
+  <span class="c-emerald">&quot;capec&quot;</span>: [],
+  <span class="c-emerald">&quot;ssvc&quot;</span>: {
+    <span class="c-emerald">&quot;factors&quot;</span>: { <span class="c-emerald">&quot;Exploitation&quot;</span>: <span class="c-amber">&quot;Active&quot;</span>, <span class="c-emerald">&quot;Automatable&quot;</span>: <span class="c-amber">&quot;Yes&quot;</span>, <span class="c-emerald">&quot;Technical Impact&quot;</span>: <span class="c-amber">&quot;Total&quot;</span> },
+    <span class="c-emerald">&quot;decisions&quot;</span>: {
+      <span class="c-emerald">&quot;Mission &amp; Well-being - Low&quot;</span>: <span class="c-amber">&quot;Attend&quot;</span>,
+      <span class="c-emerald">&quot;Mission &amp; Well-being - Medium&quot;</span>: <span class="c-amber">&quot;Act&quot;</span>,
+      <span class="c-emerald">&quot;Mission &amp; Well-being - High&quot;</span>: <span class="c-amber">&quot;Act&quot;</span>
+    }
+  },
+  <span class="c-emerald">&quot;bod_sla&quot;</span>: {
+    <span class="c-emerald">&quot;public&quot;</span>: <span class="c-amber">&quot;3 Days + Forensic Triage&quot;</span>,
+    <span class="c-emerald">&quot;internal&quot;</span>: <span class="c-amber">&quot;3 Days + Forensic Triage&quot;</span>,
+    <span class="c-emerald">&quot;factors&quot;</span>: { <span class="c-emerald">&quot;in_cisa_kev&quot;</span>: <span class="c-amber">&quot;Yes&quot;</span>, <span class="c-emerald">&quot;automatable&quot;</span>: <span class="c-amber">&quot;Yes&quot;</span>, <span class="c-emerald">&quot;technical_impact&quot;</span>: <span class="c-amber">&quot;Total&quot;</span> }
+  },
+  <span class="c-emerald">&quot;pocs&quot;</span>: [
+    <span class="c-amber">&quot;https://github.com/LLCForge/CVE-2026-123890&quot;</span>,
+    <span class="c-amber">&quot;https://github.com/dinosn/CVE-2026-123890&quot;</span>,
+    <span class="c-blue">...</span>
+  ],
+  <span class="c-emerald">&quot;references&quot;</span>: [
+    <span class="c-amber">&quot;https://support.broadcom.com/web/ecx/support-content-notification/-/external/content/SecurityAdvisories/0/39495&quot;</span>
+  ],
+  <span class="c-emerald">&quot;cisa_kev&quot;</span>: { <span class="c-emerald">&quot;in_cisa_kev&quot;</span>: <span class="c-purple">true</span>, <span class="c-emerald">&quot;added_date&quot;</span>: <span class="c-amber">&quot;2026-11-20&quot;</span>, <span class="c-emerald">&quot;ransomware_campaign_use&quot;</span>: <span class="c-purple">false</span> },
+  <span class="c-emerald">&quot;news&quot;</span>: [
+    {
+      <span class="c-emerald">&quot;title&quot;</span>: <span class="c-amber">&quot;China-Linked Hackers Exploit Critical VMware vCenter Zero-Day&quot;</span>,
+      <span class="c-emerald">&quot;link&quot;</span>: <span class="c-amber">&quot;https://www.cysecurity.news/2026/11/china-linked-hackers-exploit-critical.html&quot;</span>,
+      <span class="c-emerald">&quot;date&quot;</span>: <span class="c-amber">&quot;2026-11-22&quot;</span>
+    },
+    <span class="c-blue">...</span>
+  ]
 <span class="c-blue">}</span></code></div>
                         </div>
 
                     </div>
-
                 </div>
+
+                <!-- Response field reference -->
+                <h3 class="doc-h3">Response fields</h3>
+                <p class="doc-note">
+                    The response is a single JSON object. Dotted names such as <code>epss.score</code> refer to nested fields, and <code>[]</code> marks an array. Some fields can be empty when nothing is known for a CVE (for example <code>capec</code> is an empty array in the sample above), so handle missing or empty values.
+                </p>
+                <div class="doc-table-wrap">
+                    <table class="doc-table">
+                        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>cve_id</td><td>string</td><td>The CVE identifier.</td></tr>
+                            <tr><td>status</td><td>string</td><td>Record state, e.g. <code>PUBLISHED</code>.</td></tr>
+                            <tr><td>published_date.nvd</td><td>string</td><td>Publication date in NVD (<code>YYYY-MM-DD</code>).</td></tr>
+                            <tr><td>published_date.cveorg</td><td>string</td><td>Publication date on CVE.org (<code>YYYY-MM-DD</code>).</td></tr>
+                            <tr><td>title</td><td>string</td><td>Short title of the vulnerability.</td></tr>
+                            <tr><td>description</td><td>string</td><td>Full description. May contain newline characters.</td></tr>
+                            <tr><td>products</td><td>string</td><td>Comma-separated list of affected product names.</td></tr>
+                            <tr><td>affected.cna_affected[]</td><td>array</td><td>Affected products as reported by the CNA. Each item has <code>vendor</code>, <code>product</code>, <code>defaultStatus</code> and <code>versions[]</code> (<code>status</code>, <code>version</code>, optional <code>lessThan</code>, <code>versionType</code>).</td></tr>
+                            <tr><td>affected.nvd_cpes[]</td><td>array</td><td>NVD configuration entries. Each has <code>nodes[]</code> with <code>operator</code>, <code>negate</code> and <code>cpeMatch[]</code> (<code>vulnerable</code>, CPE 2.3 <code>criteria</code>, and optional version bounds such as <code>versionStartIncluding</code> and <code>versionEndExcluding</code>). Nodes can be nested under an <code>AND</code> operator.</td></tr>
+                            <tr><td>cvss[]</td><td>array</td><td>One entry per scoring source: <code>version</code>, <code>vectorString</code>, <code>baseScore</code> (0.0 to 10.0) and <code>source</code>.</td></tr>
+                            <tr><td>epss.score</td><td>number</td><td>EPSS probability of exploitation in the next 30 days, from 0 to 1.</td></tr>
+                            <tr><td>epss.percentile</td><td>number</td><td>Share of all scored CVEs with an EPSS score at or below this one, from 0 to 1.</td></tr>
+                            <tr><td>cwe[]</td><td>array</td><td>Weakness types: <code>id</code> (e.g. <code>CWE-288</code>) and <code>description</code>.</td></tr>
+                            <tr><td>capec[]</td><td>array</td><td>Related CAPEC attack patterns. Empty when none are mapped.</td></tr>
+                            <tr><td>ssvc.factors</td><td>object</td><td>SSVC inputs: <code>Exploitation</code>, <code>Automatable</code> and <code>Technical Impact</code>.</td></tr>
+                            <tr><td>ssvc.decisions</td><td>object</td><td>SSVC decision per mission and well-being impact level, keyed <code>Mission &amp; Well-being - Low</code>, <code>- Medium</code> and <code>- High</code>. Values are SSVC outcomes such as <code>Track</code>, <code>Track*</code>, <code>Attend</code> and <code>Act</code>.</td></tr>
+                            <tr><td>bod_sla.public</td><td>string</td><td>Remediation deadline under CISA BOD 26-04 for public-facing assets, e.g. <code>3 Days + Forensic Triage</code>.</td></tr>
+                            <tr><td>bod_sla.internal</td><td>string</td><td>Remediation deadline under CISA BOD 26-04 for internal assets.</td></tr>
+                            <tr><td>bod_sla.factors</td><td>object</td><td>Inputs behind the SLA: <code>in_cisa_kev</code>, <code>automatable</code> and <code>technical_impact</code>.</td></tr>
+                            <tr><td>pocs[]</td><td>array of strings</td><td>URLs of public proof-of-concept code and exploit write-ups.</td></tr>
+                            <tr><td>references[]</td><td>array of strings</td><td>Vendor advisories and other reference URLs.</td></tr>
+                            <tr><td>cisa_kev.in_cisa_kev</td><td>boolean</td><td><code>true</code> if the CVE is in the CISA Known Exploited Vulnerabilities catalog.</td></tr>
+                            <tr><td>cisa_kev.added_date</td><td>string</td><td>Date the CVE was added to KEV (<code>YYYY-MM-DD</code>).</td></tr>
+                            <tr><td>cisa_kev.ransomware_campaign_use</td><td>boolean</td><td><code>true</code> if CISA marks the CVE as used in ransomware campaigns.</td></tr>
+                            <tr><td>news[]</td><td>array</td><td>News articles about the CVE, newest first. Each has <code>title</code>, <code>link</code> and <code>date</code> (<code>YYYY-MM-DD</code>).</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
         </section>
 
         <!-- API SECTION 2: DAILY NEWS API -->
-        <section class="api-section" style="padding-top: 0; border-top: 1px solid rgba(51, 65, 85, 0.4);">
+        <section id="news-endpoint" class="api-section" style="padding-top: 0; border-top: 1px solid rgba(51, 65, 85, 0.4);">
             <div class="section-container" style="padding-top: 4rem;">
-                
+
                 <div class="section-header-center" style="text-align: left; margin-bottom: 2rem; max-width: 100%;">
                     <h2 class="section-title" style="margin-top: 0.5rem;">Daily Threat News Feed API</h2>
                 </div>
 
                 <div class="api-flex">
-                    
+
                     <!-- Left Details -->
                     <div class="api-left">
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; background: #0f172a; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid var(--brand-border); display: inline-block; color: #38bdf8; margin-bottom: 1rem;">
-                            GET https://news.vinthub.io/{year}/{month}/{date}.json
-                        </div>
-                        
+                        <div class="endpoint-pill">GET https://news.vinthub.io/{year}/{month}/{date}.json</div>
+
                         <p class="section-desc">
+                            Returns every CVE that was covered in the news on the given day, together with the articles that mention it.
                         </p>
 
-                        <ul>
+                        <div class="doc-h3" style="margin-top: 1.5rem;">Path parameters</div>
+                        <div class="doc-table-wrap">
+                            <table class="doc-table" style="min-width: 420px;">
+                                <thead><tr><th>Name</th><th>Type</th><th>Description</th></tr></thead>
+                                <tbody>
+                                    <tr><td>year</td><td>string</td><td>Four-digit year, e.g. <code>2026</code>.</td></tr>
+                                    <tr><td>month</td><td>string</td><td>Two-digit month with a leading zero, e.g. <code>10</code> or <code>03</code>.</td></tr>
+                                    <tr><td>date</td><td>string</td><td>Full date as <code>YYYY-MM-DD</code>, e.g. <code>2026-10-08</code>, followed by <code>.json</code>.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <ul style="margin-top: 1.5rem;">
                             <li>
                                 <span class="check-circle">✓</span>
                                 <span><strong>Input:</strong> year (YYYY), month (MM), date (YYYY-MM-DD)</span>
                             </li>
                             <li>
                                 <span class="check-circle">✓</span>
-                                <span><strong>Output:</strong> Daily CVE news</span>
+                                <span><strong>Output:</strong> an object mapping each CVE ID to its news articles for that day</span>
+                            </li>
+                            <li>
+                                <span class="check-circle">✓</span>
+                                <span><strong>Tip:</strong> take a CVE ID from this feed and look it up with the <a href="#cve-endpoint" style="color: #38bdf8;">CVE Intelligence API</a></span>
                             </li>
                         </ul>
                     </div>
 
                     <!-- Right Code Snippet Box -->
                     <div class="api-right">
-                        
-                        <!-- Code Header / Tabs -->
+
                         <div class="code-header">
                             <div class="code-tabs">
-                                <button onclick="switchApiTab('news-curl')" id="tab-news-curl" class="tab-btn active">cURL</button>
-                                <button onclick="switchApiTab('news-python')" id="tab-news-python" class="tab-btn">Python</button>
+                                <button onclick="docTab('news','curl')" id="tab-news-curl" class="tab-btn active">cURL</button>
+                                <button onclick="docTab('news','python')" id="tab-news-python" class="tab-btn">Python</button>
                             </div>
 
-                            <button onclick="copySnippet('code-news-curl', 'code-news-python', 'copy-news-text')" class="copy-btn">
-                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <button onclick="docCopy('news')" class="copy-btn">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                                 <span id="copy-news-text">Copy</span>
                             </button>
                         </div>
 
-                        <!-- Code Snippet Blocks -->
                         <div class="code-body">
-                            <pre id="code-news-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://news.vinthub.io/2026/10/2026-10-19.json&quot;</span> \
+                            <pre id="code-news-curl"><code><span class="c-purple">curl</span> -X GET <span class="c-emerald">&quot;https://news.vinthub.io/2026/10/2026-10-08.json&quot;</span> \
   -H <span class="c-amber">&quot;Accept: application/json&quot;</span></code></pre>
 
                             <pre id="code-news-python" class="hidden"><code><span class="c-purple">import</span> requests
 
-date_str = <span class="c-emerald">&quot;2026-10-19&quot;</span>
+date_str = <span class="c-emerald">&quot;2026-10-08&quot;</span>
 year, month, _ = date_str.split(<span class="c-emerald">&quot;-&quot;</span>)
-url = <span class="c-emerald">f&quot;https://news.vinthub.io/{year}/{month}/{date_str}.json&quot;</span>
 
-response = requests.get(url)
-news_data = response.json()
+response = requests.get(<span class="c-emerald">f&quot;https://news.vinthub.io/{year}/{month}/{date_str}.json&quot;</span>, timeout=<span class="c-purple">10</span>)
+response.raise_for_status()
 
-<span class="c-purple">for</span> cve_id, articles <span class="c-purple">in</span> news_data.items():
-    print(<span class="c-emerald">f&quot;CVE: {cve_id} ({len(articles)} articles)&quot;</span>)
+<span class="c-purple">for</span> cve_id, articles <span class="c-purple">in</span> response.json().items():
+    print(<span class="c-emerald">f&quot;{cve_id} ({len(articles)} articles)&quot;</span>)
     <span class="c-purple">for</span> article <span class="c-purple">in</span> articles:
-        print(<span class="c-emerald">f&quot;  - [{article['date']}] {article['title']}: {article['link']}&quot;</span>)</code></pre>
+        print(<span class="c-emerald">f&quot;  - {article['title']}: {article['link']}&quot;</span>)</code></pre>
                         </div>
 
-                        <!-- JSON Sample Response Box -->
                         <div class="json-sample">
-                            <div class="json-sample-title">SAMPLE JSON RESPONSE OBJECT:</div>
+                            <div class="json-sample-title">SAMPLE JSON RESPONSE (TRIMMED):</div>
                             <div class="json-sample-content custom-scrollbar"><code><span class="c-blue">{</span>
-  <span class="c-emerald">&quot;CVE-2026-63030&quot;</span>: <span class="c-blue">[</span>
-    <span class="c-blue">{</span>
-      <span class="c-emerald">&quot;date&quot;</span>: <span class="c-amber">&quot;2026-10-19&quot;</span>,
-      <span class="c-emerald">&quot;title&quot;</span>: <span class="c-amber">&quot;Critical RCE vulnerability discovered in enterprise gateway appliances&quot;</span>,
-      <span class="c-emerald">&quot;link&quot;</span>: <span class="c-amber">&quot;https://example.com/advisory/2026-63030&quot;</span>
-    <span class="c-blue">}</span>
-  <span class="c-blue">]</span>
+  <span class="c-emerald">&quot;CVE-2026-21589&quot;</span>: [
+    {
+      <span class="c-emerald">&quot;title&quot;</span>: <span class="c-amber">&quot;Attackers Target Critical Atlassian Vulnerability Within Hours of PoC Publication&quot;</span>,
+      <span class="c-emerald">&quot;link&quot;</span>: <span class="c-amber">&quot;https://www.securityweek.com/attackers-target-critical-atlassian-vulnerability-within-hours-of-poc-publication/&quot;</span>
+    },
+    {
+      <span class="c-emerald">&quot;title&quot;</span>: <span class="c-amber">&quot;CVE-2026-21589: Critical unauthenticated arbitrary file access in Atlassian products&quot;</span>,
+      <span class="c-emerald">&quot;link&quot;</span>: <span class="c-amber">&quot;https://www.rapid7.com/blog/post/etr-cve-2026-21589-critical-unauthenticated-arbitrary-file-access-in-atlassian-products&quot;</span>
+    }
+  ],
+  <span class="c-emerald">&quot;CVE-2026-88771&quot;</span>: [
+    {
+      <span class="c-emerald">&quot;title&quot;</span>: <span class="c-amber">&quot;Hackers Exploit Critical Citrix NetScaler Flaw to Deploy Web Shells and Steal Configuration Data&quot;</span>,
+      <span class="c-emerald">&quot;link&quot;</span>: <span class="c-amber">&quot;https://cybersecuritynews.com/citrix-netscaler-flaw/&quot;</span>
+    }
+  ],
+  <span class="c-blue">...</span>
 <span class="c-blue">}</span></code></div>
                         </div>
 
                     </div>
-
                 </div>
+
+                <!-- Response field reference -->
+                <h3 class="doc-h3">Response fields</h3>
+                <p class="doc-note">
+                    The response is a single JSON object. Its keys are CVE IDs, and the order of keys is not significant. Older CVEs can appear too, for example when one is added to CISA KEV that day.
+                </p>
+                <div class="doc-table-wrap">
+                    <table class="doc-table" style="min-width: 560px;">
+                        <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>{cve_id}</td><td>array</td><td>Key is a CVE ID such as <code>CVE-2026-21589</code>. The value lists the articles published that day about this CVE. One article can appear under several CVE IDs.</td></tr>
+                            <tr><td>{cve_id}[].title</td><td>string</td><td>Headline of the article.</td></tr>
+                            <tr><td>{cve_id}[].link</td><td>string</td><td>URL of the article. Official sources such as CISA KEV entries are included as well.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="doc-note" style="margin-top: 1rem;">
+                    Articles in this daily feed carry no <code>date</code> field because the date is already in the URL. The <code>news[]</code> array in the CVE Intelligence API does include one per article.
+                </p>
+
             </div>
         </section>
 
@@ -210,49 +413,43 @@ news_data = response.json()
     <!-- External Script -->
     <script src="script.js"></script>
     <script>
-        // Dedicated tab switcher for multiple API code snippet cards
-        function switchApiTab(tabId) {
-            const isNews = tabId.startsWith('news-');
-            const prefix = isNews ? 'news-' : 'cve-';
-            
-            ['curl', 'python'].forEach(t => {
-                const tabEl = document.getElementById(`tab-${prefix}${t}`);
-                const codeEl = document.getElementById(`code-${prefix}${t}`);
-                if (tabEl) tabEl.classList.remove('active');
-                if (codeEl) codeEl.classList.add('hidden');
+        // Tab switcher for the code snippet cards: group is 'cve' or 'news', lang is 'curl' or 'python'
+        function docTab(group, lang) {
+            ['curl', 'python'].forEach(function (t) {
+                var tabEl = document.getElementById('tab-' + group + '-' + t);
+                var codeEl = document.getElementById('code-' + group + '-' + t);
+                if (tabEl) tabEl.classList.toggle('active', t === lang);
+                if (codeEl) codeEl.classList.toggle('hidden', t !== lang);
             });
-
-            const targetTab = document.getElementById(`tab-${tabId}`);
-            const targetCode = document.getElementById(`code-${tabId}`);
-            if (targetTab) targetTab.classList.add('active');
-            if (targetCode) targetCode.classList.remove('hidden');
         }
 
-        // Dedicated copy snippet helper supporting multiple blocks
-        function copySnippet(curlId, pythonId, buttonTextId) {
-            let textToCopy = '';
-            const curlEl = document.getElementById(curlId);
-            const pyEl = document.getElementById(pythonId);
+        // Copies whichever snippet is currently visible in the group
+        function docCopy(group) {
+            var curlEl = document.getElementById('code-' + group + '-curl');
+            var pyEl = document.getElementById('code-' + group + '-python');
+            var el = (curlEl && !curlEl.classList.contains('hidden')) ? curlEl : pyEl;
+            var text = el ? el.innerText : '';
 
-            if (curlEl && !curlEl.classList.contains('hidden')) {
-                textToCopy = curlEl.innerText;
-            } else if (pyEl && !pyEl.classList.contains('hidden')) {
-                textToCopy = pyEl.innerText;
-            } else if (curlEl) {
-                textToCopy = curlEl.innerText;
+            function done() {
+                var label = document.getElementById('copy-' + group + '-text');
+                if (label) {
+                    label.innerText = 'Copied!';
+                    setTimeout(function () { label.innerText = 'Copy'; }, 2000);
+                }
             }
-
-            const tempTextArea = document.createElement('textarea');
-            tempTextArea.value = textToCopy;
-            document.body.appendChild(tempTextArea);
-            tempTextArea.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempTextArea);
-
-            const copyTextSpan = document.getElementById(buttonTextId);
-            if (copyTextSpan) {
-                copyTextSpan.innerText = 'Copied!';
-                setTimeout(() => { copyTextSpan.innerText = 'Copy'; }, 2000);
+            function fallback() {
+                var ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                done();
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(done, fallback);
+            } else {
+                fallback();
             }
         }
     </script>
