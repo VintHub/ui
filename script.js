@@ -913,6 +913,66 @@ function checkIsVulnerable(targetProduct, targetVersion, targetPlatform, rawAffe
     return "not_vulnerable";
 }
 
+function getSsvcDecisionBadgeClass(decisionLabel) {
+    const normalized = String(decisionLabel || "").trim();
+    const classMap = {
+        "Track": "ssvc-T",
+        "Track*": "ssvc-R",
+        "Attend": "ssvc-A",
+        "Act": "ssvc-C"
+    };
+    return classMap[normalized] || "sev-UNKNOWN";
+}
+
+function renderSsvcArrows() {
+    const diagram = document.getElementById("ssvcDiagram");
+    const svg = document.getElementById("ssvcSvgLayer");
+    const source = document.getElementById("ssvcSource");
+    if (!diagram || !svg || !source) return;
+
+    const branches = Array.from(diagram.querySelectorAll(".ssvc-branch"));
+    svg.querySelectorAll(".ssvc-arrow-path").forEach((el) => el.remove());
+
+    const box = diagram.getBoundingClientRect();
+    const sBox = source.getBoundingClientRect();
+    if (!box.width || !sBox.width || branches.length === 0) return;
+
+    const padding = 8;
+    const curveTension = 0.5;
+    const originSpread = 4;
+
+    const startX = sBox.right - box.left + padding;
+    const centerY = sBox.top - box.top + sBox.height / 2;
+
+    branches.forEach((branch, i) => {
+        const bBox = branch.getBoundingClientRect();
+        const endX = bBox.left - box.left - padding;
+        const endY = bBox.top - box.top + bBox.height / 2;
+
+        const offset = (i - (branches.length - 1) / 2) * originSpread;
+        const startY = centerY + offset;
+
+        const dx = Math.max(12, endX - startX);
+        const cp1x = startX + dx * curveTension;
+        const cp2x = endX - dx * curveTension;
+
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("class", "ssvc-arrow-path");
+        path.setAttribute(
+            "d",
+            `M ${startX} ${startY} C ${cp1x} ${startY}, ${cp2x} ${endY}, ${endX} ${endY}`
+        );
+        path.setAttribute("marker-end", "url(#ssvc-open-arrow)");
+        svg.appendChild(path);
+    });
+}
+
+window.addEventListener('resize', () => {
+    if (document.body.dataset.page === 'details') {
+        requestAnimationFrame(renderSsvcArrows);
+    }
+});
+
 async function startDetailsAnalysis() {
     const hash = decodeURIComponent(window.location.hash.substring(1)).toUpperCase().replace(/[–—−‑‒―]/g, '-');
     const input = hash.match(/CVE-\d{4}-\d+/) ? hash : null;
@@ -1175,9 +1235,23 @@ async function startDetailsAnalysis() {
         ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">${rawTechImpact ? (ssvcDisplayMap["Technical Impact"][rawTechImpact] || ssvcDisplayMap["Technical Impact"][String(rawTechImpact).toLowerCase()] || capitalize(String(rawTechImpact))) : "N/A"}</div></div>`);
     }
 
-    const dec = getSSVCDecision(ssvcVec);
-    document.getElementById('displaySsvcDec').innerText = dec.label;
-    document.getElementById('displaySsvcDec').className = `badge-large ssvc-${dec.key}`;
+    const setSsvcBranches = (decisions) => {
+    const mapping = [
+        { id: "ssvcDecHigh", key: "Mission & Well-being - High" },
+        { id: "ssvcDecMedium", key: "Mission & Well-being - Medium" },
+        { id: "ssvcDecLow", key: "Mission & Well-being - Low" }
+    ];
+
+    mapping.forEach(({ id, key }) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const val = decisions && decisions[key] ? String(decisions[key]).trim() : "N/A";
+            el.innerText = val;
+            el.className = `badge ssvc-decision-badge ${getSsvcDecisionBadgeClass(val)}`;
+        });
+    };
+
+    setSsvcBranches(isRejected ? null : data.ssvc?.decisions);
 
     const ssvcVecEl = document.getElementById('displaySsvcVector');
     if (ssvcVec !== "N/A") {
@@ -1256,6 +1330,7 @@ async function startDetailsAnalysis() {
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('dashboard').style.display = 'grid';
+    requestAnimationFrame(renderSsvcArrows);
 }
 
 function showCvssModal(cvssList) {
