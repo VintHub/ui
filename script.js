@@ -336,7 +336,7 @@ async function startAnalysis() {
         if (status) status.innerText = "No CVEs found.";
         return;
     }
-    tbody.innerHTML = `<tr><td colspan="14" style="text-align:center; padding: 4rem; color: #94a3b8;">Scanning database...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding: 4rem; color: #94a3b8;">Scanning database...</td></tr>`;
 
     let processedCount = 0;
     for (const cveId of uniqueCves) {
@@ -379,10 +379,14 @@ async function startAnalysis() {
 
         let ssvcVec = "N/A";
         const ssvcFactors = data.ssvc?.factors;
-        if (ssvcFactors && ssvcFactors.Exploitation && ssvcFactors.Automatable && ssvcFactors["Technical Impact"]) {
-            const eVal = ssvcMap.Exploitation.values[String(ssvcFactors.Exploitation).toLowerCase()] || "N";
-            const aVal = ssvcMap.Automatable.values[String(ssvcFactors.Automatable).toLowerCase()] || "N";
-            const tVal = String(ssvcFactors["Technical Impact"]).toLowerCase() === "total" ? "T" : "P";
+        const rawExploitation = ssvcFactors?.Exploitation ?? ssvcFactors?.exploitation;
+        const rawAutomatable = ssvcFactors?.Automatable ?? ssvcFactors?.automatable;
+        const rawTechImpact = ssvcFactors?.["Technical Impact"] ?? ssvcFactors?.technical_impact;
+
+        if (rawExploitation && rawAutomatable && rawTechImpact) {
+            const eVal = ssvcMap.Exploitation.values[String(rawExploitation).toLowerCase()] || "N";
+            const aVal = ssvcMap.Automatable.values[String(rawAutomatable).toLowerCase()] || "N";
+            const tVal = String(rawTechImpact).toLowerCase() === "total" ? "T" : "P";
             ssvcVec = `SSVCv2/E:${eVal}/A:${aVal}/T:${tVal}`;
         }
         const decision = getSSVCDecision(ssvcVec);
@@ -440,7 +444,6 @@ function renderTable() {
 
     displayData.sort((a, b) => {
         let valA = a[currentSort.col], valB = b[currentSort.col];
-        if (currentSort.col === 'ssvcDecision') { valA = valA.label; valB = valB.label; }
         if (currentSort.col === 'pocs') { valA = valA.length; valB = valB.length; }
         if (currentSort.col === 'bod') {
             const bodA = getBOD2604SLA(a.ssvc, a.kev !== '-').ext;
@@ -462,7 +465,7 @@ function renderTable() {
             if (item.isInvalid) {
                 return `<tr>
                     <td class="no-break"><b style="color:${color}">${item.cveId}</b></td>
-                    <td colspan="13" style="text-align:center; color:${item.isRejected ? '#f59e0b' : '#94a3b8'}; letter-spacing: 0.1em; font-weight: bold; padding: 1rem; background: ${bg};">${label}</td>
+                    <td colspan="12" style="text-align:center; color:${item.isRejected ? '#f59e0b' : '#94a3b8'}; letter-spacing: 0.1em; font-weight: bold; padding: 1rem; background: ${bg};">${label}</td>
                 </tr>`;
             }
             else if (item.isRejected) {
@@ -472,7 +475,7 @@ function renderTable() {
                             <b style="color:${color}" onmouseover="this.style.color='#f1f5f9';" onmouseout="this.style.color='${color}';">${item.cveId}</b>
                         </a>
                     </td>
-                    <td colspan="13" style="text-align:center; color:${item.isRejected ? '#f59e0b' : '#94a3b8'}; letter-spacing: 0.1em; font-weight: bold; padding: 1rem; background: ${bg};">${label}</td>
+                    <td colspan="12" style="text-align:center; color:${item.isRejected ? '#f59e0b' : '#94a3b8'}; letter-spacing: 0.1em; font-weight: bold; padding: 1rem; background: ${bg};">${label}</td>
                 </tr>`;
 
             }
@@ -496,7 +499,6 @@ function renderTable() {
             <td><span class="badge sev-${item.sev.replace('/', '')}">${item.sev}</span></td>
             <td><b style="color:#f1f5f9">${item.score > 0 ? item.score.toFixed(1) : '—'}</b></td>
             <td class="vector-cell">${item.vector}</td>
-            <td><span class="badge ssvc-${item.ssvcDecision.key}">${item.ssvcDecision.label}</span></td>
             <td class="vector-cell">${item.ssvc}</td>
             <td>${item.epss}</td>
             <td>
@@ -543,10 +545,10 @@ function sortTable(col) {
 }
 
 function exportCSV() {
-    const headers = ["VULN ID", "CVE/NVD Published", "Product", "Severity", "Score", "Vector", "SSVC Decision", "SSVC Vector", "BOD 26-04 Ext SLA", "BOD 26-04 Int SLA", "EPSS", "KEV", "Ransomware", "PoCs", "CWE", "CAPEC"];
+    const headers = ["VULN ID", "CVE/NVD Published", "Product", "Severity", "Score", "CVSS Vector", "SSVC Vector", "BOD 26-04 Ext SLA", "BOD 26-04 Int SLA", "EPSS", "KEV", "Ransomware", "PoCs", "CWE", "CAPEC"];
     
     const rows = globalData.map(r => {
-        return `"${r.cveId}","${r.published}","${r.products}","${r.sev}",${r.score},"${r.vector}","${r.ssvcDecision.label}","${r.ssvc}","N/A","N/A","${r.epss}","${r.kev}","${r.knownRansomware ? 'Known' : 'Unknown'}","${r.pocs.join('; ')}","${r.cwe}","${r.capec}"`;
+        return `"${r.cveId}","${r.published}","${r.products}","${r.sev}",${r.score},"${r.vector}","${r.ssvc}","N/A","N/A","${r.epss}","${r.kev}","${r.knownRansomware ? 'Known' : 'Unknown'}","${r.pocs.join('; ')}","${r.cwe}","${r.capec}"`;
     });
     
     const blob = new Blob([[headers.join(','), ...rows].join('\n')], { type: 'text/csv' });
@@ -1144,16 +1146,20 @@ async function startDetailsAnalysis() {
     let ssvcVec = "N/A";
     let ssvcMeta = [];
     const ssvcFactors = data.ssvc?.factors;
-    if (ssvcFactors && ssvcFactors.Exploitation && ssvcFactors.Automatable && ssvcFactors["Technical Impact"]) {
-        let exploitation = ssvcFactors.Exploitation;
-        let automatable = ssvcFactors.Automatable;
-        let techImpact = ssvcFactors["Technical Impact"];
+    const rawExploitation = ssvcFactors?.Exploitation ?? ssvcFactors?.exploitation;
+    const rawAutomatable = ssvcFactors?.Automatable ?? ssvcFactors?.automatable;
+    const rawTechImpact = ssvcFactors?.["Technical Impact"] ?? ssvcFactors?.technical_impact;
+
+    if (rawExploitation && rawAutomatable && rawTechImpact) {
+        let exploitation = String(rawExploitation);
+        let automatable = String(rawAutomatable);
+        let techImpact = String(rawTechImpact);
 
         if (isKev && exploitation.toLowerCase() !== "active") exploitation = "Active";
 
-        const expVal = ssvcDisplayMap.Exploitation[exploitation] || capitalize(exploitation);
-        const autVal = ssvcDisplayMap.Automatable[automatable] || capitalize(automatable);
-        const tecVal = ssvcDisplayMap["Technical Impact"][techImpact] || capitalize(techImpact);
+        const expVal = ssvcDisplayMap.Exploitation[exploitation] || ssvcDisplayMap.Exploitation[exploitation.toLowerCase()] || capitalize(exploitation);
+        const autVal = ssvcDisplayMap.Automatable[automatable] || ssvcDisplayMap.Automatable[automatable.toLowerCase()] || capitalize(automatable);
+        const tecVal = ssvcDisplayMap["Technical Impact"][techImpact] || ssvcDisplayMap["Technical Impact"][techImpact.toLowerCase()] || capitalize(techImpact);
 
         ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Exploitation</div><div class="metric-val">${expVal}</div></div>`);
         ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">${autVal}</div></div>`);
@@ -1164,9 +1170,9 @@ async function startDetailsAnalysis() {
         const tChar = techImpact.toLowerCase() === "total" ? "T" : "P";
         ssvcVec = `SSVCv2/E:${eChar}/A:${aChar}/T:${tChar}`;
     } else if (ssvcFactors) {
-        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Exploitation</div><div class="metric-val">${ssvcFactors.Exploitation ? (ssvcDisplayMap.Exploitation[ssvcFactors.Exploitation] || capitalize(ssvcFactors.Exploitation)) : "N/A"}</div></div>`);
-        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">${ssvcFactors.Automatable ? (ssvcDisplayMap.Automatable[ssvcFactors.Automatable] || capitalize(ssvcFactors.Automatable)) : "N/A"}</div></div>`);
-        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">${ssvcFactors["Technical Impact"] ? (ssvcDisplayMap["Technical Impact"][ssvcFactors["Technical Impact"]] || capitalize(ssvcFactors["Technical Impact"])) : "N/A"}</div></div>`);
+        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Exploitation</div><div class="metric-val">${rawExploitation ? (ssvcDisplayMap.Exploitation[rawExploitation] || ssvcDisplayMap.Exploitation[String(rawExploitation).toLowerCase()] || capitalize(String(rawExploitation))) : "N/A"}</div></div>`);
+        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">${rawAutomatable ? (ssvcDisplayMap.Automatable[rawAutomatable] || ssvcDisplayMap.Automatable[String(rawAutomatable).toLowerCase()] || capitalize(String(rawAutomatable))) : "N/A"}</div></div>`);
+        ssvcMeta.push(`<div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">${rawTechImpact ? (ssvcDisplayMap["Technical Impact"][rawTechImpact] || ssvcDisplayMap["Technical Impact"][String(rawTechImpact).toLowerCase()] || capitalize(String(rawTechImpact))) : "N/A"}</div></div>`);
     }
 
     const dec = getSSVCDecision(ssvcVec);
