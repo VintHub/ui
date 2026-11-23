@@ -1190,7 +1190,7 @@ async function startDetailsAnalysis() {
     let kevMarkup = "";
     if (isKev) {
         document.getElementById('kevAlert').style.display = 'flex';
-        document.getElementById('kevDate').innerText = `Added: ${kevInfo.added_date || 'N/A'}`;
+        document.getElementById('kevDate').innerText = `Added to CISA KEV: ${kevInfo.added_date || 'N/A'}`;
         if (kevInfo.ransomware_campaign_use) {
             document.getElementById('kevRansomware').style.display = 'flex';
         }
