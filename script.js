@@ -149,8 +149,8 @@ function renderFooter() {
                 <span class="footer-brand">Vinthub © ${currentYear}</span>
                 <nav class="footer-nav">
                     <a href="about.html">About & FAQ</a>
-                    <a href="https://github.com/lucacapacci/Vulnerability-Intelligence-Hub/" target="_blank" rel="noopener">GitHub</a>
-                    <a href="https://github.com/lucacapacci/Vulnerability-Intelligence-Hub/blob/main/LICENSE" target="_blank" rel="noopener">Apache 2.0</a>
+                    <a href="https://www.linkedin.com/company/vinthub/" target="_blank" rel="noopener">Follow on LinkedIn</a>
+            
                 </nav>
             </div>
         </footer>
