@@ -52,11 +52,11 @@
                     <div style="display: flex; gap: 30px; align-items: center; flex-wrap: wrap;">
                         <div style="flex: 1; min-width: 200px;">
                             <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Product</label>
-                            <select id="vcProduct"></select>
+                            <select id="vcProduct" autocomplete="off"></select>
                         </div>
                         <div style="flex: 0.7; min-width: 200px;">
                             <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px;">Version</label>
-                            <input type="text" id="vcVersion" placeholder="Enter version (e.g. 1.2.3)">
+                            <input type="text" id="vcVersion" placeholder="Enter version (e.g. 1.2.3)" autocomplete="off">
                         </div>
                         <div style="display: flex; align-items: flex-end; padding-bottom: 1px;">
                             <button id="vcSubmit" style="padding: 8px 16px; height: 35px; background: #475569; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-top: 20px; font-family: 'Space Grotesk', system-ui, sans-serif;">Check Status</button>
@@ -75,7 +75,7 @@
     </div>
 
     <div class="card span-05" style="text-align: center; align-self: start;">
-        <label class="label">CVSS Score</label>
+        <label class="label">CVSS Base Score</label>
         <div style="font-size: 4rem; font-weight: 900;" id="displayScore">0.0</div>
         <div id="displaySevBadge" class="badge-large">UNKNOWN</div>
     </div>
@@ -98,7 +98,48 @@
 
     <div class="card span-1">
         <label class="label">SSVC Decision</label>
-        <div id="displaySsvcDec" class="badge-large" style="width:100%; text-align:center; box-sizing:border-box;">N/A</div>
+        <div class="ssvc-diagram" id="ssvcDiagram">
+            <svg class="ssvc-arrow-layer" id="ssvcSvgLayer">
+                <defs>
+                    <marker
+                        id="ssvc-open-arrow"
+                        viewBox="0 0 12 12"
+                        refX="10"
+                        refY="6"
+                        markerWidth="8"
+                        markerHeight="8"
+                        markerUnits="userSpaceOnUse"
+                        orient="auto"
+                    >
+                        <path
+                            d="M 2 2 L 10 6 L 2 10"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </marker>
+                </defs>
+            </svg>
+
+            <div class="ssvc-source" id="ssvcSource">Mission &amp;<br>Well-being</div>
+
+            <div class="ssvc-targets" id="ssvcTargets">
+                <div class="ssvc-branch" data-level="High">
+                    <span class="ssvc-level">High</span>
+                    <span class="badge ssvc-decision-badge" id="ssvcDecHigh">N/A</span>
+                </div>
+                <div class="ssvc-branch" data-level="Medium">
+                    <span class="ssvc-level">Medium</span>
+                    <span class="badge ssvc-decision-badge" id="ssvcDecMedium">N/A</span>
+                </div>
+                <div class="ssvc-branch" data-level="Low">
+                    <span class="ssvc-level">Low</span>
+                    <span class="badge ssvc-decision-badge" id="ssvcDecLow">N/A</span>
+                </div>
+            </div>
+        </div>
         <div id="displaySsvcVector" class="vector-box" style="margin-top:15px; font-size: 0.75rem;">-</div>
         <div id="ssvcExpansion" class="metrics-grid" style="margin-top:15px;"></div>
     </div>
