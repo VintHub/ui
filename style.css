@@ -1282,6 +1282,7 @@ a.hero-id:hover {
     border: 1px solid var(--brand-border);
     border-radius: 6px;
     overflow: hidden;
+    min-width: 235px;
 }
 
 .ssvc-source {
