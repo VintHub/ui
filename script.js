@@ -84,6 +84,31 @@ function getBestCvss(cvssList) {
     return sortCvssList(cvssList)[0].item;
 }
 
+function getCvssCalculatorUrl(vector, versionHint = "") {
+    if (!vector || vector === "N/A") return null;
+
+    const [{ ver }] = sortCvssList([{ vectorString: vector, version: versionHint }]);
+
+    switch (ver.label) {
+        case "2.0":
+            return `https://nvd.nist.gov/vuln-metrics/cvss/v2-calculator?vector=${encodeURIComponent(vector)}`;
+        case "3.0": {
+            const vec = /^CVSS:3\.0\//i.test(vector) ? vector : `CVSS:3.0/${vector}`;
+            return `https://www.first.org/cvss/calculator/3.0#${vec}`;
+        }
+        case "3.1": {
+            const vec = /^CVSS:3\.1\//i.test(vector) ? vector : `CVSS:3.1/${vector}`;
+            return `https://www.first.org/cvss/calculator/3.1#${vec}`;
+        }
+        case "4.0": {
+            const vec = /^CVSS:4\.0\//i.test(vector) ? vector : `CVSS:4.0/${vector}`;
+            return `https://www.first.org/cvss/calculator/4.0#${vec}`;
+        }
+        default:
+            return null;
+    }
+}
+
 function updateClearButtonVisibility() {
     const inputEl = document.getElementById('cve-search-input');
     const clearBtn = document.querySelector('.clear-btn');
@@ -1104,7 +1129,10 @@ async function startDetailsAnalysis() {
     }
 
     const cvssList = Array.isArray(data.cvss) ? data.cvss : [];
-    const cvssObj = getBestCvss(cvssList);
+    const sortedCvss = sortCvssList(cvssList);
+    const topCvssEntry = sortedCvss[0] || {};
+    const cvssObj = topCvssEntry.item || {};
+    const detectedCvssVersion = topCvssEntry.ver?.label || cvssObj.version || "";
     const score = cvssObj.baseScore || 0;
     const sev = (cvssObj.baseSeverity || getCvssSeverity(score)).toUpperCase();
     const vector = cvssObj.vectorString || "N/A";
@@ -1112,7 +1140,14 @@ async function startDetailsAnalysis() {
     document.getElementById('displayScore').innerText = score > 0 ? score.toFixed(1) : '—';
     document.getElementById('displaySevBadge').innerText = sev;
     document.getElementById('displaySevBadge').className = `badge-large sev-${sev.replace('/', '')}`;
-    document.getElementById('displayVector').innerText = vector;
+
+    const cvssVecEl = document.getElementById('displayVector');
+    const cvssCalcUrl = getCvssCalculatorUrl(vector, detectedCvssVersion);
+    if (cvssCalcUrl) {
+        cvssVecEl.innerHTML = `<a href="${cvssCalcUrl}" target="_blank" rel="noopener noreferrer" title="Open in CVSS Calculator" style="color: inherit; text-decoration: none; transition: color 0.15s ease;" onmouseover="this.style.color='var(--brand-accent)'; this.style.textDecoration='underline';" onmouseout="this.style.color='inherit'; this.style.textDecoration='none';">${vector}</a>`;
+    } else {
+        cvssVecEl.innerText = vector;
+    }
 
     // Handle button next to "CVSS Score"
     const scoreEl = document.getElementById('displayScore');
@@ -1407,12 +1442,16 @@ function showCvssModal(cvssList) {
         const sev = (item.baseSeverity || getCvssSeverity(s)).toUpperCase();
         const vec = item.vectorString || 'N/A';
         const src = item.source || 'N/A';
+        const calcUrl = getCvssCalculatorUrl(vec, ver.label);
+        const vecHtml = calcUrl
+            ? `<a href="${calcUrl}" target="_blank" rel="noopener noreferrer" title="Open in CVSS Calculator" style="color: inherit; text-decoration: none; transition: color 0.15s ease;" onmouseover="this.style.color='var(--brand-accent)'; this.style.textDecoration='underline';" onmouseout="this.style.color='inherit'; this.style.textDecoration='none';">${vec}</a>`
+            : vec;
         return `
             <tr style="border-bottom:1px solid rgba(255,255,255,0.06);">
                 <td style="padding:0.65rem 0.75rem; width:75px; white-space:nowrap; color:#94a3b8; font-weight:600;">${ver.label}</td>
                 <td style="padding:0.65rem 0.75rem; width:65px; white-space:nowrap; text-align:center; font-weight:bold;">${s > 0 ? s.toFixed(1) : '—'}</td>
                 <td style="padding:0.65rem 0.75rem; width:105px; white-space:nowrap;"><span class="badge sev-${sev.replace('/', '')}">${sev}</span></td>
-                <td style="padding:0.65rem 0.75rem; font-family:monospace; font-size:0.8rem; word-break:normal; overflow-wrap:anywhere;">${vec}</td>
+                <td style="padding:0.65rem 0.75rem; font-family:monospace; font-size:0.8rem; word-break:normal; overflow-wrap:anywhere;">${vecHtml}</td>
                 <td style="padding:0.65rem 0.75rem; width:180px; color:#cbd5e1;">${src}</td>
             </tr>
         `;
