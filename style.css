@@ -1024,7 +1024,7 @@ a.hero-id:hover {
 .metric-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
 .metric-val { font-size: 12px; font-weight: bold; }
 
-.ref-list { list-style: none; padding: 0; margin: 10px 0; max-height: 200px; overflow-y: auto; }
+.ref-list { list-style: none; padding: 0; margin: 10px 0; overflow-y: auto; }
 .ref-list li { margin-bottom: 6px; font-size: 0.85rem; border-bottom: 1px solid var(--brand-border); padding-bottom: 4px; }
 .ref-list a { color: var(--brand-accent); text-decoration: none; word-break: break-all; }
 
