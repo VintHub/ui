@@ -67,15 +67,17 @@
                 <div class="doc-table-wrap">
                     <table class="doc-table" style="min-width: 560px;">
                         <thead>
-                            <tr><th>Endpoint</th><th>Purpose</th></tr>
+                            <tr><th>Endpoint</th><th>Description</th><th>Purpose</th><<th>Purpose</th></tr>
                         </thead>
                         <tbody>
                             <tr>
                                 <td class="overview-links"><a href="#cve-endpoint">GET cve.vinthub.io/{year}/{cve_id}</a></td>
-                                <td style="font-family: inherit; white-space: normal;">Full intelligence record for one CVE: scores, SSVC, BOD SLA, KEV status, PoCs, references and news.</td>
+                                <td style="font-family: inherit; white-space: normal;">CVE Intelligence Lookup API</td>
+                                <td style="font-family: inherit; white-space: normal;">Full intelligence record for one CVE: scores, SSVC, BOD SLA, KEV status, PoCs, CWEs, CAPECs, references and news.</td>
                             </tr>
                             <tr>
                                 <td class="overview-links"><a href="#news-endpoint">GET news.vinthub.io/{year}/{month}/{date}</a></td>
+                                 <td style="font-family: inherit; white-space: normal;">Daily Threat News Feed API</td>
                                 <td style="font-family: inherit; white-space: normal;">All CVEs that appeared in the news on a given day, with the articles that mention them.</td>
                             </tr>
                         </tbody>
@@ -260,7 +262,7 @@ print(<span class="c-emerald">&quot;PoCs found:&quot;</span>, len(data[<span cla
                             <tr><td>epss.percentile</td><td>number</td><td>Share of all scored CVEs with an EPSS score at or below this one, from 0 to 1.</td></tr>
                             <tr><td>cwe[]</td><td>array</td><td>Weakness types: <code>id</code> (e.g. <code>CWE-288</code>) and <code>description</code>.</td></tr>
                             <tr><td>capec[]</td><td>array</td><td>Related CAPEC attack patterns. Empty when none are mapped.</td></tr>
-                            <tr><td>ssvc.factors</td><td>object</td><td>SSVC inputs: <code>Exploitation</code>, <code>Automatable</code> and <code>Technical Impact</code>.</td></tr>
+                            <tr><td>ssvc.factors</td><td>object</td><td>SSVC inputs: <code>exploitation</code>, <code>automatable</code> and <code>technical_impact</code>.</td></tr>
                             <tr><td>ssvc.decisions</td><td>object</td><td>SSVC decision per mission and well-being impact level, keyed <code>Mission &amp; Well-being - Low</code>, <code>- Medium</code> and <code>- High</code>. Values are SSVC outcomes such as <code>Track</code>, <code>Track*</code>, <code>Attend</code> and <code>Act</code>.</td></tr>
                             <tr><td>bod_sla.public</td><td>string</td><td>Remediation deadline under CISA BOD 26-04 for public-facing assets, e.g. <code>3 Days + Forensic Triage</code>.</td></tr>
                             <tr><td>bod_sla.internal</td><td>string</td><td>Remediation deadline under CISA BOD 26-04 for internal assets.</td></tr>
