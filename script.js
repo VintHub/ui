@@ -1264,19 +1264,6 @@ async function startDetailsAnalysis() {
 
     document.getElementById('ssvcExpansion').innerHTML = ssvcMeta.join('');
 
-    if (isRejected) {
-        document.getElementById('displaySsvcDec').innerText = "N/A";
-        document.getElementById('displaySsvcDec').className = 'badge-large ssvc-N/A';
-        document.getElementById('displaySsvcVector').innerText = "N/A";
-        document.getElementById('ssvcExpansion').innerHTML = "";
-
-        document.getElementById('bodSlaPublic').innerText = "N/A";
-        document.getElementById('bodSlaInternal').innerText = "N/A";
-        document.getElementById('bodExpansion').innerHTML = "";
-
-        document.getElementById('ssvcExpansion').innerHTML = ssvcMeta.join('');
-    }
-
     const bod = data.bod_sla;
     document.getElementById('bodSlaPublic').innerText = bod?.public || "N/A";
     document.getElementById('bodSlaInternal').innerText = bod?.internal || "N/A";
@@ -1289,6 +1276,15 @@ async function startDetailsAnalysis() {
         <div class="metric-item"><div class="metric-label">Automatable</div><div class="metric-val">N/A</div></div>
         <div class="metric-item"><div class="metric-label">Technical Impact</div><div class="metric-val">N/A</div></div>
     `;
+
+    if (isRejected) {
+        document.getElementById('displaySsvcVector').innerText = "N/A";
+        document.getElementById('ssvcExpansion').innerHTML = "";
+
+        document.getElementById('bodSlaPublic').innerText = "N/A";
+        document.getElementById('bodSlaInternal').innerText = "N/A";
+        document.getElementById('bodExpansion').innerHTML = "";
+    }
 
     document.getElementById('displayId').innerText = input;
     const pubDate = data.published_date?.nvd || data.published_date?.cveorg || "Unpublished";
